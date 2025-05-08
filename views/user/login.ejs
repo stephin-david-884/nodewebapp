@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="css/signup.css"> <!-- Same CSS as signup -->
+</head>
+<body>
+    <div class="container">
+        <div class="signup-form">
+            <h2>Login</h2>
+            
+            <form id="loginform" method="POST" action="/login">
+                <div class="form-group">
+                    <label for="email">Email address</label>
+                    <input type="email" id="email" placeholder="Enter email" name="email">
+                    <div id="error-email" class="error-message"></div>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Password" name="password">
+                    <div id="error-password" class="error-message"></div>
+                </div>
+                <button type="submit" class="signup-button">Log In</button>
+            </form>
+
+            <div class="social-signup">
+                <p>or sign in with</p>
+                <a href="/auth/google" class="google-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 533.5 544.3">
+                        <path fill="#4285F4" d="M533.5 278.4c0-17.4-1.6-34.1-4.7-50.4H272v95.3h147.4c-6.3 34-25 62.8-53.2 82.1v68.2h85.9c50.3-46.3 81.4-114.5 81.4-195.2z"/>
+                        <path fill="#34A853" d="M272 544.3c72.3 0 133-23.9 177.3-64.9l-85.9-68.2c-23.8 15.9-54.3 25.3-91.4 25.3-70 0-129.3-47.2-150.5-110.5H34.2v69.7C78.6 480.5 169.7 544.3 272 544.3z"/>
+                        <path fill="#FBBC05" d="M121.5 325.9c-10.1-30-10.1-62.3 0-92.3V163.9H34.2c-38.6 76.3-38.6 165.9 0 242.2l87.3-69.7z"/>
+                        <path fill="#EA4335" d="M272 107.7c39.3-.6 77 13.4 106.3 38.7l79.2-79.2C406.6 24.8 342.5-1.1 272 0 169.7 0 78.6 63.8 34.2 163.9l87.3 69.7c21.2-63.3 80.5-110.5 150.5-110.5z"/>
+                    </svg>
+                    Google
+                </a>
+            </div>
+
+            <p class="login-link">Don't have an account? <a href="/signup">Sign up</a></p>
+        </div>
+
+        <div class="side-content">
+            <div class="happy-shopping">FLUXO</div>
+            <img src="https://images.unsplash.com/photo-1488161628813-04466f872be2?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8bWFsZSUyMG1vZGVsc3xlbnwwfHwwfHx8MA%3D%3D" alt="Happy Shopper">
+        </div>
+    </div>
+
+    <!-- Validation Script -->
+    <!-- <script>
+        const email = document.getElementById("email");
+        const password = document.getElementById("password");
+        const form = document.getElementById("loginform");
+
+        const emailError = document.getElementById("error-email");
+        const passwordError = document.getElementById("error-password");
+
+        form.addEventListener("submit", function(e) {
+            let valid = true;
+
+            const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!emailPattern.test(email.value)) {
+                emailError.innerText = "Enter a valid email address";
+                valid = false;
+            } else {
+                emailError.innerText = "";
+            }
+
+            if (password.value.length < 6) {
+                passwordError.innerText = "Password must be at least 6 characters";
+                valid = false;
+            } else {
+                passwordError.innerText = "";
+            }
+
+            if (!valid) e.preventDefault();
+        });
+    </script> -->
+
+    <!-- SweetAlert CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<% if (typeof message !== 'undefined') { %>
+<script>
+    Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: '<%= message %>',
+    });
+</script>
+<% } %>
+
+</body>
+</html>
