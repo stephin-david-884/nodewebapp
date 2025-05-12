@@ -5,6 +5,7 @@ const {userAuth,adminAuth} = require("../middlewares/auth")
 const customerController = require("../controllers/admin/customerController")
 const categoryController = require("../controllers/admin/categoryController")
 const brandController = require("../controllers/admin/brandController")
+const productController = require("../controllers/admin/productController")
 const multer = require("multer");
 const storage = require("../helpers/multer");
 const uploads = multer({storage:storage});
@@ -39,5 +40,22 @@ router.post("/addBrand",adminAuth,uploads.single("image"), brandController.addBr
 router.get("/blockBrand", adminAuth, brandController.blockBrand);
 router.get("/unBlockBrand", adminAuth, brandController.unBlockBrand);
 router.get("/deleteBrand", adminAuth, brandController.deleteBrand);
+
+
+//Product Management
+router.get("/addProducts", adminAuth, productController.getProductAddPage);
+router.post("/addProducts", 
+    adminAuth, 
+    uploads.fields([
+      { name: 'image1', maxCount: 1 },
+      { name: 'image2', maxCount: 1 },
+      { name: 'image3', maxCount: 1 },
+      { name: 'image4', maxCount: 1 }
+    ]), 
+    productController.addProducts
+  );
+router.get("/products", adminAuth, productController.getAllProducts) 
+router.post("/addProductOffer", adminAuth,productController.addProductOffer)
+router.post("/removeProductOffer", adminAuth,productController.removeProductOffer)
 
 module.exports = router
