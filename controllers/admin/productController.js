@@ -204,4 +204,157 @@ const blockProduct = async (req,res) => {
     }
 }
 
-module.exports = {getProductAddPage, addProducts, getAllProducts, addProductOffer, removeProductOffer, blockProduct, unblockProduct}
+const getEditProduct = async (req, res) => {
+    try {
+      const id = req.query.id
+      const product = await Product.findOne({ _id: id }).populate("category")
+      const categories = await Category.find({})
+      const brand = await Brand.find({isBlocked:false});
+  
+      if (!product) {
+        return res.status(404).send("Product not found")
+      }
+  
+      res.render("edit-product", {
+        product: product,
+        brand:brand,
+        cat: categories,
+      })
+    } catch (error) {
+      console.error("Error in getEditProduct:", error)
+      res.redirect("/pageerror")
+    }
+  }
+  
+  const editProduct = async (req, res) => {
+    try {
+      const id = req.params.id
+      const {
+        productName,
+        description,
+        
+        regularPrice,
+        salePrice,
+        quantity,
+        color,
+        brand,       
+        category,
+      } = req.body
+  
+      const existingProduct = await Product.findOne({
+        productName: productName,
+        _id: { $ne: id },
+      })
+  
+      if (existingProduct) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Product with this name already exists. Please try another name." })
+      }
+  
+      const updateFields = {
+        productName,
+        description,
+        regularPrice,
+        salePrice,
+        quantity,
+        color,
+        brand,
+        category,
+      }
+  
+      const product = await Product.findById(id)
+      if (!product) {
+        return res.status(404).json({ success: false, message: "Product not found" })
+      }
+  
+      
+      for (let i = 1; i <= 4; i++) {
+        const croppedImageData = req.body[`croppedImage${i}`];
+        
+        if (croppedImageData && croppedImageData.startsWith('data:image')) {
+          
+          const base64Data = croppedImageData.replace(/^data:image\/\w+;base64,/, '');
+          const imageBuffer = Buffer.from(base64Data, 'base64');
+          
+         
+          const filename = Date.now() + "-" + `cropped-image-${i}` + ".webp";
+          const filepath = path.join(__dirname, "../../public/uploads/product-images", filename);
+  
+        
+          await sharp(imageBuffer)
+            .webp({ quality: 80 })
+            .toFile(filepath);
+  
+          const imagePath = `uploads/product-images/${filename}`;
+  
+          
+          if (product.productImage[i - 1]) {
+            product.productImage[i - 1] = imagePath;
+          } else {
+            product.productImage.push(imagePath);
+          }
+        } else if (req.files && req.files[`image${i}`]) {
+          
+          const file = req.files[`image${i}`][0];
+          const filename = Date.now() + "-" + file.originalname.replace(/\s/g, "") + ".webp";
+          const filepath = path.join(__dirname, "../../public/uploads/product-images", filename);
+  
+          await sharp(file.buffer)
+            .resize(800, 800, { fit: "inside", withoutEnlargement: true })
+            .webp({ quality: 80 })
+            .toFile(filepath);
+  
+          const imagePath = `uploads/product-images/${filename}`;
+  
+          if (product.productImage[i - 1]) {
+            product.productImage[i - 1] = imagePath;
+          } else {
+            product.productImage.push(imagePath);
+          }
+        }
+      }
+  
+      Object.assign(product, updateFields);
+      await product.save();
+  
+      res.json({ success: true, message: "Product updated successfully" });
+    } catch (error) {
+      console.error("Error in editProduct:", error);
+      res.status(500).json({ success: false, message: "An error occurred while updating the product" });
+    }
+  };
+  
+  
+  
+  const deleteSingleImage = async (req, res) => {
+    try {
+      const { imageNameToServer, productIdToServer, imageIndex } = req.body;
+      const product = await Product.findById(productIdToServer);
+  
+      if (!product) {
+        return res.status(404).json({ status: false, message: "Product not found" });
+      }
+  
+      
+      product.productImage.splice(imageIndex, 1);
+      await product.save();
+  
+      const imagePath = path.join(__dirname, "../../public", imageNameToServer);
+  
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+        console.log(`Image ${imageNameToServer} deleted successfully`);
+      } else {
+        console.log(`Image ${imageNameToServer} not found`);
+      }
+  
+      res.json({ status: true, message: "Image deleted successfully" });
+    } catch (error) {
+      console.error("Error in deleteSingleImage:", error);
+      res.status(500).json({ status: false, message: "An error occurred while deleting the image" });
+    }
+  };
+
+module.exports = {getProductAddPage, addProducts, getAllProducts, addProductOffer, 
+    removeProductOffer, blockProduct, unblockProduct, getEditProduct, editProduct, deleteSingleImage}
