@@ -26,7 +26,7 @@ async (accessToken,refreshToken,profile,done) => {
         }
 
     } catch (error) {
-        return done(error,user);
+        return done(error,null);
     }
 }
 

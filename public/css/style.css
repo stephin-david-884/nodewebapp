@@ -87,6 +87,12 @@ p {
 	font-family: 'Times New Roman', Times, serif;
 }
 
+#fluxowhite{
+	font-size: 2rem;
+	font-family: 'Times New Roman', Times, serif;
+	color: white;
+}
+
 img {
 	max-width: 100%;
 }

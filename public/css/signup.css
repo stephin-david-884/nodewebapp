@@ -213,3 +213,12 @@ body {
     font-size: 0.75rem;
     display: none;
 }
+.forgot-password-link{
+    font-size: 0.875rem;
+    color: #676666;
+    text-decoration: none;
+}
+.forgot-password-link:hover{
+    color: #454545;
+    text-decoration: underline;
+}
