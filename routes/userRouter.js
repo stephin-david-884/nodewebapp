@@ -3,15 +3,27 @@ const router = express.Router();
 const userController = require("../controllers/user/userController")
 const passport = require("passport")
 const profileController = require("../controllers/user/profileController")
+const {userAuth} = require("../middlewares/auth")
 
 router.get("/pagenotfound", userController.pageNotFound)
-router.get("/",userController.loadHomepage)
+
+// Home page & Shopping page
+router.get("/",userController.loadHomepage);
+router.get("/shop", userAuth, userController.loadShoppingPage)
+router.get("/filter", userAuth, userController.filterProduct)
+router.get("/filterPrice", userAuth, userController.filterPrice)
+router.post("/search", userAuth, userController.searchProducts)
+
+
+// Sign up Management
 router.get("/signup",userController.loadSignup)
-router.get("/shop",userController.loadShopping)
+
 router.post("/signup", userController.signup)
 router.post("/verify-otp", userController.verifyOtp)
 router.post("/resend-otp", userController.resendOtp)
 
+
+// Login Management 
 router.get("/login",userController.loadLogin)
 router.post("/login",userController.login)
 router.get("/logout",userController.logout)
