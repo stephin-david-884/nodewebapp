@@ -14,6 +14,10 @@
                     <label class="form-label">Description</label>
                     <textarea name="description" class="form-control border"><%=category.description%></textarea>
                 </div>
+                <% if (error) { %>
+                    <div class="alert alert-danger"><%=error%></div>
+                    <% } %>
+
                 <div class="d-grid text-end mt-30 col-md-5">
                     <button class="btn btn-primary" type="submit">Update Category</button>
                 </div>

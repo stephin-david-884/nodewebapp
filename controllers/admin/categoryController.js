@@ -125,18 +125,28 @@ const getUnlistCategory = async (req,res) => {
     }
 }
 
-const getEditCategory = async (req,res) => {
+const getEditCategory = async (req, res) => {
     try {
         const id = req.query.id;
-        const category = await Category.findOne({_id:id});
-        res.render("edit-category",{category:category})
+        const category = await Category.findOne({ _id: id });
+
+        // Extract the error query param (if exists) and pass to view
+        const error = req.query.error || null;
+
+        res.render("edit-category", {
+            category: category,
+            error: error // ✅ This line is important
+        });
     } catch (error) {
-        res.redirect("/pageerror")
+        console.error("Error in getEditCategory:", error);
+        res.redirect("/pageerror");
     }
-}
+};
+
 
 const editCategory = async (req, res) => {
     try {
+        const error = req.query.error;
         const id = req.params.id;
         const { categoryName, description } = req.body;
 

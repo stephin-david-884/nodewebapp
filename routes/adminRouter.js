@@ -6,6 +6,7 @@ const customerController = require("../controllers/admin/customerController")
 const categoryController = require("../controllers/admin/categoryController")
 const brandController = require("../controllers/admin/brandController")
 const productController = require("../controllers/admin/productController")
+const bannerController = require("../controllers/admin/bannerController")
 const multer = require("multer");
 const storage = require("../helpers/multer");
 const uploads = multer({storage:storage});
@@ -31,6 +32,8 @@ router.post("/removeCategoryOffer", adminAuth, categoryController.removeCategory
 router.get("/listCategory", adminAuth, categoryController.getListCategory);
 router.get("/unlistCategory", adminAuth, categoryController.getUnlistCategory);
 router.get("/editCategory", adminAuth, categoryController.getEditCategory);
+router.get("/edit-category/:id", adminAuth, categoryController.getEditCategory);
+
 router.post("/editCategory/:id", adminAuth, categoryController.editCategory);
 
 
@@ -68,6 +71,13 @@ router.post("/editProduct/:id", adminAuth, uploads.fields([
     { name: 'image4', maxCount: 1 }
 ]), productController.editProduct);
 router.post("/deleteImage",adminAuth,productController.deleteSingleImage)
+
+//Banner Management
+router.get("/banner", adminAuth, bannerController.getBannerPage)
+router.get("/addBanner", adminAuth, bannerController.getAddBannerPage)
+router.post("/addBanner", adminAuth, uploads.single("images"), bannerController.addBanner)
+router.get("/deleteBanner", adminAuth, bannerController.deleteBanner)
+
 
 
 module.exports = router
