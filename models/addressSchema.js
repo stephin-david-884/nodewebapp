@@ -20,7 +20,7 @@ const addressSchema = new Schema({
             type:String,
             required:true
         },
-        landmark:{
+        landMark:{
             type:String,
             required:true
         },

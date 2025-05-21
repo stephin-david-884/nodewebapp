@@ -125,6 +125,39 @@
 .breadcrumb a:hover::after {
  transform: scaleX(1);
 }
+.profile-pic-wrapper {
+    position: relative;
+    width: 130px;
+    height: 130px;
+    margin-bottom: 1rem;
+  }
+
+  .profile-pic-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid #ddd;
+  }
+
+  .edit-icon {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background-color: white;
+    border-radius: 50%;
+    padding: 6px;
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+  }
+
+  .edit-icon:hover {
+    background-color: #e9ecef;
+  }
+
+  input[type="file"] {
+    display: none;
+  }
 </style>
 
 
@@ -192,6 +225,25 @@
                    <div class="card-header">
                      <h5 class="mb-0 text-center">User Profile</h5>
                    </div>
+                   <!-- Profile Image with Pen Icon -->
+                    <div class="d-flex justify-content-center">
+                    <div class="profile-pic-wrapper">
+                      <img id="profileImagePreview" src="<%= user.profileImage ? ('/uploads/profile/' + user.profileImage) : '/img/default-avatar.png' %>" alt="Profile Picture">
+
+                      <label for="profileImageInput" class="edit-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                            class="bi bi-pencil-fill text-primary" viewBox="0 0 16 16">
+                          <path d="M12.854.146a.5.5 0 0 1 .11.637l-.057.07L5.207 8.5H4.5v-.707l7.7-7.7a.5.5 0 0 1 .653-.064zM11.207 2.5 13.5 4.793l-8 8H3v-2.5l8-8z"/>
+                        </svg>
+                      </label>
+                    </div>
+                    </div>
+                    <!-- File Input (hidden) -->
+                    <input type="file" name="profileImage" accept="image/*" id="profileImageInput">
+
+                    <!-- Success/Failure Alert -->
+                    <div id="uploadStatus" class="mt-2"></div>
+
                    <div class="card-body text-center">
                      <h5 class="card-title"><%=user.name%></h5>
                      <p class="card-text">
@@ -214,29 +266,35 @@
                  aria-labelledby="address-tab"
                >
                  <div class="row">
-                
+                  <%if(userAddress){%>
+                    <%userAddress.address.forEach((address)=>{%>
                    <div class="col-lg-6">
                      <div class="card mb-3 mb-lg-0">
                        <div class="card-header">
-                         <h5 class="mb-0"></h5>
+                         <h5 class="mb-0"><%=address.addressType%></h5>
                        </div>
 
 
                        <div class="card-body">
                          <address>
-                        
-                        
+                          <%=address.name%><br>
+                          <%=address.city%><br>
+                          <%=address.landMark%><br>
+                          <%=address.state%><br>
                          </address>
-                         <p></p>
+                         <p><%=address.pincode%></p>
+                         <p><%=address.phone%></p>
+                         <p><%=address.altPhone%></p>
                       
                          <div class="d-flex justify-content-between">
-                           <a href="#" class="btn-small">Edit</a>
-                           <a href="#" class="btn-small" onclick="">Delete</a>
+                           <a href="/editAddress?id=<%=address._id%>" class="btn-small">Edit</a>
+                           <a href="/deleteAddress?id=<%=address._id%>" class="btn-small" onclick="return confirm('Are you sure you want to delete this address?')">Delete</a>
                          </div>
                         
                        </div>
                      </div>
                    </div>
+                   <%})%><%}else{%>
                 
                    <div class="col-lg-6">
                      <div class="card mb-3 mb-lg-0">
@@ -248,9 +306,10 @@
                        </div>
                      </div>
                    </div>
+                   <%}%>
               
-                   <div>
-                     <a href="#">
+                   <div class="address-btn pt-5">
+                     <a href="/addAddress">
                        <button class="btn btn-primary w-70">
                          Add address
                        </button>
@@ -361,4 +420,34 @@
    </div>
  </section>
 </main>
+<script>
+  document.getElementById("profileImageInput").addEventListener("change", async function () {
+    const file = this.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("profileImage", file);
+
+    // Optional: Show uploading message
+    document.getElementById("uploadStatus").innerHTML = `<span class="text-info">Uploading...</span>`;
+
+    try {
+      const res = await fetch("/upload-profile-pic", {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        document.getElementById("uploadStatus").innerHTML = `<span class="text-success">Uploaded successfully!</span>`;
+        document.getElementById("profileImagePreview").src = `/uploads/profile/${data.filename}?t=${new Date().getTime()}`;
+      } else {
+        document.getElementById("uploadStatus").innerHTML = `<span class="text-danger">${data.error || "Upload failed"}</span>`;
+      }
+    } catch (err) {
+      document.getElementById("uploadStatus").innerHTML = `<span class="text-danger">Something went wrong</span>`;
+    }
+  });
+</script>
 <%- include("../../views/partials/user/footer") %>

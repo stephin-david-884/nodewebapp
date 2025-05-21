@@ -54,6 +54,10 @@ const userSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref:"Order"
     }],
+    profileImage: {
+    type: String,
+    default: '',
+    },
     createdOn:{
         type: Date,
         default: Date.now,

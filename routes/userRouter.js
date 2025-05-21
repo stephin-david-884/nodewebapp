@@ -5,6 +5,22 @@ const passport = require("passport")
 const profileController = require("../controllers/user/profileController")
 const {userAuth} = require("../middlewares/auth")
 const productController = require("../controllers/user/productController")
+const wishlistController = require("../controllers/user/wishlistController")
+const multer = require("multer");
+const path = require("path");
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "public/uploads/profile");
+  },
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname);
+    const uniqueName = Date.now() + "-" + Math.round(Math.random() * 1E9) + ext;
+    cb(null, uniqueName);
+  }
+});
+
+const uploads = multer({ storage: storage });
 
 router.get("/pagenotfound", userController.pageNotFound)
 
@@ -58,11 +74,23 @@ router.post("/update-email", userAuth, profileController.updateEmail);
 router.get("/change-password", userAuth, profileController.changePassword);
 router.post("/change-password", userAuth, profileController.changePasswordValid);
 router.post("/verify-changepassword-otp", userAuth, profileController.verifyChangePassword);
-router.post("/resend-changepassword-otp", userAuth, profileController.resendOtp )
+router.post("/resend-changepassword-otp", userAuth, profileController.resendOtp)
+router.post("/upload-profile-pic",userAuth,uploads.single("profileImage"), profileController.changeProfilePic)
 
-
+//Address Management
+router.get("/addAddress", userAuth, profileController.addAddress);
+router.post("/addAddress", userAuth, profileController.postAddAddress)
+router.get("/editAddress", userAuth, profileController.editAddress);
+router.post("/editAddress", userAuth, profileController.postEditAddress);
+router.get("/deleteAddress", userAuth, profileController.deleteAddress)
 
 //Product Management
 router.get("/productDetails", userAuth, productController.productDetails)
+
+
+//Wishlist Management
+router.get("/wishlist", userAuth,wishlistController.loadWishlist);
+router.post("/addToWishlist", userAuth, wishlistController.addToWishlist)
+router.get("/removeFromWishlist", userAuth, wishlistController.removeProduct)
 
 module.exports = router
