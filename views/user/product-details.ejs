@@ -1,4 +1,5 @@
 <%- include("../../views/partials/user/header") %>
+
 <main class="main">
  <div class="page-header breadcrumb-wrap">
      <div class="container">
@@ -114,4 +115,74 @@
      </div>
  </section>
 </main>
+<section class="pt-50 pb-50">
+  <div class="container">
+    <div class="section-title style-1 mb-30">
+      <h3>Related Products</h3>
+    </div>
+
+    <!-- Swiper -->
+    <div class="swiper related-swiper">
+      <div class="swiper-wrapper">
+        <% relatedProducts.forEach(function(item) { %>
+          <div class="swiper-slide">
+            <div class="product-cart-wrap">
+              <div class="product-img-action-wrap">
+                <div class="product-img product-img-zoom">
+                  <a href="/productDetails?id=<%= item._id %>">
+                    <img src="<%= item.productImage[0] %>" alt="<%= item.productName %>" style="height: 200px; object-fit: contain;">
+                  </a>
+                </div>
+              </div>
+              <div class="product-content-wrap text-center mt-10">
+                <h2><a href="/product/<%= item._id %>"><%= item.productName %></a></h2>
+                <div class="product-price">
+                  <span>₹<%= item.salePrice %></span>
+                  <span class="old-price">₹<%= item.regularPrice %></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+
+      <!-- Add Arrows -->
+      <div class="swiper-button-next"></div>
+      <div class="swiper-button-prev"></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- Swiper CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css" />
+
+<!-- Swiper JS -->
+<script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+
+
+<script>
+  const swiper = new Swiper('.related-swiper', {
+    slidesPerView: 1,
+    spaceBetween: 15,
+    loop: true,
+    navigation: {
+      nextEl: '.swiper-button-next',
+      prevEl: '.swiper-button-prev',
+    },
+    breakpoints: {
+      576: {
+        slidesPerView: 2,
+      },
+      768: {
+        slidesPerView: 3,
+      },
+      992: {
+        slidesPerView: 4,
+      },
+    },
+  });
+</script>
+
+
 <%- include("../../views/partials/user/footer") %>

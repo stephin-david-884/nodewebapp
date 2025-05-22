@@ -13,7 +13,14 @@ const productDetails = async (req,res) => {
         const findCategory = product.category;
         const categoryOffer = findCategory ?.categoryOffer || 0;
         const productOffer = product.productOffer || 0;
-        const totalOffer = categoryOffer + productOffer;
+        if (product.regularPrice && product.salePrice && product.regularPrice > product.salePrice) {
+            totalOffer = Math.round(((product.regularPrice - product.salePrice) / product.regularPrice) * 100);
+        }
+
+        const relatedProducts = await Product.find({
+            category: product.category._id,
+            _id: { $ne: product._id } // exclude current product
+        }).limit(10); // optional limit
 
         res.render("product-details",{
             user:userData,
@@ -21,6 +28,7 @@ const productDetails = async (req,res) => {
             quantity:product.quantity,
             totalOffer:totalOffer,
             category:findCategory,
+            relatedProducts
         });
 
 
