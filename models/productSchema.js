@@ -35,6 +35,12 @@ const productSchema = new Schema({
         type:Number,
         default:0
     },
+    sizes: {
+    S: { type: Number, default: 0 },
+    M: { type: Number, default: 0 },
+    L: { type: Number, default: 0 }
+    },
+
     color:{
         type:String,
         required:true

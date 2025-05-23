@@ -83,6 +83,11 @@ const addProducts = async (req, res) => {
         salePrice,
         createdOn:new Date(),
         quantity,
+        sizes: {
+          S: quantity,
+          M: quantity,
+          L: quantity
+        },
         color,
         
         productImage: imageFilenames,
@@ -316,6 +321,7 @@ const getEditProduct = async (req, res) => {
       }
   
       Object.assign(product, updateFields);
+      
       await product.save();
   
       res.json({ success: true, message: "Product updated successfully" });

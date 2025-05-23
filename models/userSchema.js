@@ -38,10 +38,23 @@ const userSchema = new Schema({
         type: Boolean,
         default: false
     },
-    cart:[{
+    cart: [{
+    productId: {
         type: Schema.Types.ObjectId,
-        ref:"Cart",
+        ref: "Product",
+        required: true
+    },
+    quantity: {
+        type: Number,
+        required: true,
+        default: 1
+    },
+    size: {
+      type: String, 
+      
+    },
     }],
+
     wallet:{
         type:Number,
         default:0,

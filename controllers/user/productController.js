@@ -13,6 +13,7 @@ const productDetails = async (req,res) => {
         const findCategory = product.category;
         const categoryOffer = findCategory ?.categoryOffer || 0;
         const productOffer = product.productOffer || 0;
+        let totalOffer = 0;
         if (product.regularPrice && product.salePrice && product.regularPrice > product.salePrice) {
             totalOffer = Math.round(((product.regularPrice - product.salePrice) / product.regularPrice) * 100);
         }

@@ -6,8 +6,10 @@ const profileController = require("../controllers/user/profileController")
 const {userAuth} = require("../middlewares/auth")
 const productController = require("../controllers/user/productController")
 const wishlistController = require("../controllers/user/wishlistController")
+const cartController = require("../controllers/user/cartController")
 const multer = require("multer");
 const path = require("path");
+
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -87,6 +89,12 @@ router.get("/deleteAddress", userAuth, profileController.deleteAddress)
 //Product Management
 router.get("/productDetails", userAuth, productController.productDetails)
 
+//Cart Management
+router.get("/cart", userAuth, cartController.getCartPage)
+router.post("/addToCart",userAuth, cartController.addToCart)
+router.post("/changeQuantity", userAuth,cartController.changeQuantity)
+router.post("/deleteItem", userAuth, cartController.deleteProduct)
+router.post('/updateCartSize', userAuth, cartController.updateCartSize);
 
 //Wishlist Management
 router.get("/wishlist", userAuth,wishlistController.loadWishlist);

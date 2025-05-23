@@ -1,12 +1,41 @@
 <%- include("../../views/partials/user/header") %>
 
+<style>
+  .size-selector .size-btn {
+    padding: 10px 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: white;
+    color: #000;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  .size-selector .size-btn:hover:not(.disabled),
+  .size-selector .size-btn.selected {
+    border-color: #000;
+    background-color: #000;
+    color: #fff;
+  }
+
+  .size-selector .size-btn.disabled {
+    border-color: #e0e0e0;
+    color: #aaa;
+    background-color: #f8f8f8;
+    cursor: not-allowed;
+  }
+</style>
+
+
+
 <main class="main">
  <div class="page-header breadcrumb-wrap">
      <div class="container">
          <div class="breadcrumb">
              <a href="/" rel="nofollow">Home</a>
              <a href="/shop"><span></span> Shop</a>
-             <span></span>product detail page
+             <span>Product detail page</span>
          </div>
      </div>
  </div>
@@ -87,15 +116,42 @@
                                  </div>
                                
                                  <div class="bt-1 border-color-1 mt-30 mb-30"></div>
+                                 <div class="mb-3">
+                                  <label class="form-label">Select Size</label>
+                                  <div class="size-selector d-flex gap-2 flex-wrap">
+                                    <% if (product.sizes.S > 0) { %>
+                                      <button type="button" class="size-btn" data-size="S">S</button>
+                                    <% } else { %>
+                                      <button type="button" class="size-btn disabled" disabled>S</button>
+                                    <% } %>
+
+                                    <% if (product.sizes.M > 0) { %>
+                                      <button type="button" class="size-btn" data-size="M">M</button>
+                                    <% } else { %>
+                                      <button type="button" class="size-btn disabled" disabled>M</button>
+                                    <% } %>
+
+                                    <% if (product.sizes.L > 0) { %>
+                                      <button type="button" class="size-btn" data-size="L">L</button>
+                                    <% } else { %>
+                                      <button type="button" class="size-btn disabled" disabled>L</button>
+                                    <% } %>
+                                  </div>
+                                </div>
+                                <input type="hidden" id="selectedSize" name="size" />
+
+
                                  <div class="detail-extralink">
                                      <div class="detail-qty border radius">
-                                         <a href="#" class="qty-down" onclick="" ><i class="fi-rs-angle-small-down"></i></a>
+                                         <a href="#" class="qty-down" onclick="changeQty(-1)" ><i class="fi-rs-angle-small-down"></i></a>
                                          <span class="qty-val" id="quantity">1</span>
-                                         <a href="#" class="qty-up" onclick=""><i class="fi-rs-angle-small-up"></i></a>
+                                         <a href="#" class="qty-up" onclick="changeQty(1)"><i class="fi-rs-angle-small-up"></i></a>
                                      </div>
                                      <div class="product-extra-link2">
                                       
-                                         <button type="submit" class="button button-add-to-cart" onclick="">Add to cart</button>
+                                        <button type="button" class="button button-add-to-cart" onclick="addToCart('<%= product._id %>')">Add to cart</button>
+
+
                                        
                                          <a aria-label="Add To Wishlist" class="action-btn hover-up" href="#"><i class="fi-rs-heart"></i></a>
                                      </div>
@@ -183,6 +239,78 @@
     },
   });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  async function addToCart(productId) {
+     const quantity = qty;
+     const selectedSize = document.getElementById("selectedSize").value;
+      if (!selectedSize) {
+      return Swal.fire("Select Size", "Please choose a size before adding to cart", "warning");
+    }
+    try {
+      const response = await fetch('/addToCart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ productId, quantity, size: selectedSize })
+      });
+
+      const data = await response.json();
+
+      if (data.status === true) {
+        Swal.fire('Success', 'Added to cart', 'success');
+        // Update cart count if you have this element
+        const cartCountEl = document.getElementById('cart-count');
+        if (cartCountEl) {
+          cartCountEl.innerText = data.cartLength;
+        }
+      } else {
+        Swal.fire('Oops!', data.message || 'Something went wrong', 'warning');
+      }
+    } catch (error) {
+      console.error(error);
+      Swal.fire('Error', 'Something went wrong', 'error');
+    }
+  }
+</script>
+<script>
+  let qty = 1;
+
+function changeQty(change) {
+  const newQty = qty + change;
+
+  if (newQty >= 1 && newQty <= 3) {
+    qty = newQty;
+    document.getElementById('quantity').innerText = qty;
+  } else if (newQty > 3) {
+    Swal.fire('Limit Reached', 'You can only add up to 3 units of this product', 'info');
+  }
+}
+
+</script>
+<script>
+  const sizeButtons = document.querySelectorAll('.size-btn');
+  const selectedSizeInput = document.getElementById('selectedSize');
+
+  sizeButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.disabled) return;
+
+      // Unselect all buttons first
+      sizeButtons.forEach(b => b.classList.remove('selected'));
+
+      // Highlight selected one
+      btn.classList.add('selected');
+
+      // Update hidden input
+      selectedSizeInput.value = btn.dataset.size;
+    });
+  });
+</script>
+
+
+
 
 
 <%- include("../../views/partials/user/footer") %>
