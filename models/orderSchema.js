@@ -8,22 +8,28 @@ const orderSchema = new Schema({
         default:()=>uuidv4(),
         unique:true
     },
-    orderedItems:[{
-
-        product:{
+    userId: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+    },
+    product: [
+        {
+        _id: {
             type: Schema.Types.ObjectId,
-            ref:"Product",
-            required:true
+            ref: "Product",
+            required: true,
         },
-        quantity:{
-            type:Number,
-            required:true
+        name: String,
+        price: Number,
+        image: String,
+        quantity: Number,
+        productStatus: {
+            type: String,
+            default: "Confirmed",
         },
-        price:{
-            type:Number,
-            default:0
-        }
-    }],
+        },
+    ],
     totalPrice:{
         type:Number,
         required:true
@@ -37,9 +43,11 @@ const orderSchema = new Schema({
         required:true
     },
     address:{
-        type:Schema.Types.ObjectId,
+        /*type:Schema.Types.ObjectId,
         ref:"User",
-        required:true
+        required:true*/
+        type: Object, // storing entire address object instead of ref
+        required: true,
     },
     invoiceDate:{
         type:Date
@@ -47,7 +55,7 @@ const orderSchema = new Schema({
     status:{
         type:String,
         required:true,
-        enum:['Pending','Processing','Shipped','Delivered','Cancelled','Return Request','Returned']
+        enum:['Pending','Processing','Shipped','Delivered','Cancelled','Return Request','Returned','Confirmed']
     },
     createdOn:{
         type:Date,
@@ -57,7 +65,12 @@ const orderSchema = new Schema({
     couponApplied:{
         type:Boolean,
         default:false
-    }
+    },
+     payment: {
+    type: String,
+    enum: ["cod", "wallet", "razorpay"],
+    default: "cod",
+    },
 
 })
 

@@ -7,6 +7,7 @@ const {userAuth} = require("../middlewares/auth")
 const productController = require("../controllers/user/productController")
 const wishlistController = require("../controllers/user/wishlistController")
 const cartController = require("../controllers/user/cartController")
+const orderController = require("../controllers/user/orderController")
 const multer = require("multer");
 const path = require("path");
 
@@ -84,7 +85,9 @@ router.get("/addAddress", userAuth, profileController.addAddress);
 router.post("/addAddress", userAuth, profileController.postAddAddress)
 router.get("/editAddress", userAuth, profileController.editAddress);
 router.post("/editAddress", userAuth, profileController.postEditAddress);
-router.get("/deleteAddress", userAuth, profileController.deleteAddress)
+router.get("/deleteAddress", userAuth, profileController.deleteAddress);
+router.get("/addaddres", userAuth, profileController.addaddress);
+router.post("/addAddres", userAuth, profileController.postAddAddres)
 
 //Product Management
 router.get("/productDetails", userAuth, productController.productDetails)
@@ -100,5 +103,13 @@ router.post('/updateCartSize', userAuth, cartController.updateCartSize);
 router.get("/wishlist", userAuth,wishlistController.loadWishlist);
 router.post("/addToWishlist", userAuth, wishlistController.addToWishlist)
 router.get("/removeFromWishlist", userAuth, wishlistController.removeProduct)
+
+//Order Management
+router.get("/checkout", userAuth, orderController.getCheckoutPage)
+router.get("/deleteProduct", userAuth, orderController.deleteProduct);
+router.post("/orderPlaced", userAuth,orderController.orderPlaced);
+router.get("/orderDetails", userAuth,orderController.getOrderDetailsPage);
+router.get('/viewOrderDetails/:orderId', userAuth, orderController.viewOrderDetails)
+router.post("/cancelOrder",userAuth,orderController.cancelOrder);
 
 module.exports = router

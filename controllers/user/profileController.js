@@ -1,5 +1,6 @@
 const User = require("../../models/userSchema")
 const Address = require("../../models/addressSchema")
+const Order = require("../../models/orderSchema")
 const nodemailer = require("nodemailer")
 const bcrypt = require("bcrypt")
 const env = require("dotenv").config();
@@ -164,9 +165,14 @@ const userProfile = async (req,res) => {
         const userId = req.session.user;
         const userData = await User.findById(userId);
         const addressData = await Address.findOne({userId:userId});
+         const orders = await Order.find({ userId })
+        .populate('product._id') // Assuming your field is product.product
+        .sort({ createdAt: -1 })     // Show latest orders first
+        .lean();
         res.render("profile",{
             user:userData,
-            userAddress:addressData
+            userAddress:addressData,
+            orders: orders
         }) 
     } catch (error) {
         console.error("Error to rerieve profile data", error);
@@ -317,6 +323,15 @@ const addAddress = async (req,res) => {
     }
 }
 
+const addaddress = async (req,res) => {
+    try {
+        const user = req.session.user;
+        res.render("add-Addres",{user:user})
+    } catch (error) {
+        res.redirect("/pagenotfound")
+    }
+}
+
 const postAddAddress = async (req,res) => {
     try {
         const userId = req.session.user;
@@ -335,6 +350,31 @@ const postAddAddress = async (req,res) => {
             await userAddress.save();
         }
         res.redirect("/userProfile")
+    } catch (error) {
+        console.error("Error adding address:",error);
+        res.redirect("/pagenotfound")
+        
+    }
+}
+
+const postAddAddres = async (req,res) => {
+    try {
+        const userId = req.session.user;
+        const userData = await User.findOne({_id:userId});
+        const {addressType,name,city,landMark,state,pincode,phone,altPhone} = req.body;
+
+        const userAddress = await Address.findOne({userId:userData._id});
+        if(!userAddress){
+            const newAddress = new Address({
+                userId: userData._id,
+                address: [{addressType,name,city,landMark,state,pincode,phone,altPhone}]
+            });
+            await newAddress.save();
+        }else{
+            userAddress.address.push({addressType,name,city,landMark,state,pincode,phone,altPhone});
+            await userAddress.save();
+        }
+        res.redirect("/checkout")
     } catch (error) {
         console.error("Error adding address:",error);
         res.redirect("/pagenotfound")
@@ -466,4 +506,6 @@ module.exports = {
     postEditAddress,
     deleteAddress,
     changeProfilePic,
+    addaddress,
+    postAddAddres
 }
