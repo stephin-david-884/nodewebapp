@@ -7,6 +7,33 @@ const Product = require("../../models/productSchema")
  const mongoose = require("mongoose");
  const fs = require("fs")
  const path = require("path")
+const PDFDocument = require("pdfkit")
+const generateInvoice = require("../../utils/invoiceGenerator")
+require('pdfkit-table');
+const env = require("dotenv").config();
+const razorpay = require("razorpay");
+const crypto = require("crypto");
+const moment = require("moment");
+const razorpayInstance = new razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET
+});
+
+
+const generateOrderRazorpay = async (orderId, totalAmount) => {
+  try {
+    const razorpayOrder = await razorpayInstance.orders.create({
+      amount: totalAmount * 100, // Razorpay expects amount in paise
+      currency: "INR",
+      receipt: `order_rcptid_${orderId}`,
+      payment_capture: 1, // Auto-capture payment
+    });
+    return razorpayOrder;
+  } catch (error) {
+    console.error("Error generating Razorpay order:", error);
+    throw error;
+  }
+};
 
 
 const getCheckoutPage = async (req, res) => {
@@ -319,6 +346,138 @@ const cancelOrder = async (req, res) => {
   }
 };
 
+const getInvoice = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.orderId);
+    if (!order) return res.status(404).send('Order not found');
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=invoice-${order.orderId}.pdf`);
+
+    const doc = new PDFDocument({ margin: 50 });
+    doc.pipe(res);
+
+    // Header
+    doc.fontSize(24).text("FLUXO", { align: 'center' });
+    doc.fontSize(12).text("www.fluxo.com", { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(20).text("INVOICE", { align: 'center' });
+    doc.moveDown(2);
+
+    // Order details
+    doc.fontSize(12).text(`Order ID: ${order.orderId}`);
+    doc.text(`Date: ${new Date(order.createdOn).toLocaleDateString()}`);
+    doc.text(`Customer: ${order.address.name}`);
+    doc.text(`Phone: ${order.address.phone}`);
+    doc.text(`Address: ${order.address.landMark}, ${order.address.city}, ${order.address.state} - ${order.address.pincode}`);
+    doc.moveDown();
+
+    // Table Headers
+    const startX = 50;
+    let startY = doc.y;
+    const rowHeight = 20;
+
+    const cols = [
+      { label: 'Item', width: 200 },
+      { label: 'Qty', width: 50 },
+      { label: 'Price', width: 100 },
+      { label: 'Total', width: 100 },
+    ];
+
+    // Header background
+    doc.rect(startX, startY, cols.reduce((sum, col) => sum + col.width, 0), rowHeight).fill('#eee').stroke();
+    doc.fillColor('#000');
+
+    let x = startX;
+    cols.forEach(col => {
+      doc.text(col.label, x + 5, startY + 5);
+      x += col.width;
+    });
+
+    startY += rowHeight;
+
+    // Table Rows
+    order.product.forEach((item, index) => {
+      let x = startX;
+      const rowY = startY + index * rowHeight;
+
+      doc.rect(startX, rowY, cols.reduce((sum, col) => sum + col.width, 0), rowHeight).stroke();
+
+      doc.text(item.name, x + 5, rowY + 5, { width: cols[0].width - 10 });
+      x += cols[0].width;
+
+      doc.text(item.quantity, x + 5, rowY + 5);
+      x += cols[1].width;
+
+      doc.text(`${item.price}`, x + 5, rowY + 5);
+      x += cols[2].width;
+
+      doc.text(`Rs.${item.quantity * item.price}`, x + 5, rowY + 5);
+    });
+
+    startY += order.product.length * rowHeight + 20;
+
+    // Totals
+    doc.moveTo(startX, startY).moveDown();
+    doc.fontSize(12).text(`Subtotal: Rs.${order.totalPrice}`);
+    doc.text(`Discount: Rs.${order.discount}`);
+    doc.text(`Final Amount: Rs.${order.finalAmount}`);
+    doc.text(`Payment Method: ${order.payment}`);
+    doc.text(`Order Status: ${order.status}`);
+    doc.moveDown(2);
+    doc.fontSize(12).text('Thank you for shopping with us!', { align: 'center' });
+
+    doc.end();
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error generating invoice');
+  }
+};
 
 
- module.exports = {getCheckoutPage, deleteProduct, orderPlaced, getOrderDetailsPage, viewOrderDetails, cancelOrder}
+const verifyPayment = async (req, res) => {
+  try {
+    const { order, payment } = req.body;
+
+    const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET); // Razorpay secret key
+    hmac.update(order.id + "|" + payment.razorpay_payment_id);
+    const generatedSignature = hmac.digest("hex");
+
+    if (generatedSignature === payment.razorpay_signature) {
+      // Payment is verified
+      await Order.findByIdAndUpdate(order.receipt.split("_")[2], { status: "Confirmed" });
+      res.json({ status: true });
+    } else {
+      await Order.findByIdAndUpdate(order.receipt.split("_")[2], { status: "Failed" });
+      res.json({ status: false });
+    }
+  } catch (err) {
+    console.error("Payment verification error:", err);
+    res.json({ status: false });
+  }
+};
+
+const paymentConfirm = async (req, res) => {
+  try {
+    const orderId = req.body.orderId;
+    const updated = await Order.updateOne(
+      { _id: orderId },
+      { $set: { status: "Confirmed" } }
+    );
+
+    if (updated.modifiedCount === 1) {
+      res.json({ status: true });
+    } else {
+      res.json({ status: false, message: "Order not updated" });
+    }
+  } catch (error) {
+    console.error("Error in paymentConfirm:", error);
+    res.status(500).json({ status: false, error: "Internal Server Error" });
+  }
+};
+
+
+
+
+
+ module.exports = {getCheckoutPage, deleteProduct, orderPlaced, getOrderDetailsPage, viewOrderDetails, cancelOrder,getInvoice, verifyPayment, paymentConfirm}

@@ -160,26 +160,58 @@ const postNewPassword = async (req,res) => {
     }
 }
 
-const userProfile = async (req,res) => {
-    try {
-        const userId = req.session.user;
-        const userData = await User.findById(userId);
-        const addressData = await Address.findOne({userId:userId});
-         const orders = await Order.find({ userId })
-        .populate('product._id') // Assuming your field is product.product
-        .sort({ createdAt: -1 })     // Show latest orders first
-        .lean();
-        res.render("profile",{
-            user:userData,
-            userAddress:addressData,
-            orders: orders
-        }) 
-    } catch (error) {
-        console.error("Error to rerieve profile data", error);
-        res.redirect("/pagenotfound")
-        
-    }
-}
+
+
+const userProfile = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const userData = await User.findById(userId);
+    const addressData = await Address.findOne({ userId });
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = 5;
+    const skip = (page - 1) * limit;
+
+    const totalOrders = await Order.countDocuments({ userId });
+    const orders = await Order.find({ userId })
+      .sort({ createdOn: -1 }) // latest first
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const totalPages = Math.ceil(totalOrders / limit);
+
+     // Wallet history pagination
+    const walletPage = parseInt(req.query.walletPage) || 1;
+    const walletLimit = 5;
+    const walletSkip = (walletPage - 1) * walletLimit;
+    const walletHistory = userData.history || [];
+
+    const paginatedHistory = walletHistory
+      .sort((a, b) => new Date(b.date) - new Date(a.date)) // newest first
+      .slice(walletSkip, walletSkip + walletLimit);
+    const totalWalletPages = Math.ceil(walletHistory.length / walletLimit);
+
+    const walletTransactions = userData.walletTransactions || [];
+
+    res.render("profile", {
+      user: userData,
+      userAddress: addressData,
+      orders,
+      currentPage: page,
+      totalPages,
+      walletTransactions: paginatedHistory,
+      walletCurrentPage: walletPage,
+      walletTotalPages: totalWalletPages
+
+    });
+
+  } catch (error) {
+    console.error("Error retrieving profile data", error);
+    res.redirect("/pagenotfound");
+  }
+};
+
 
 const changeEmail = async (req,res) => {
     try {

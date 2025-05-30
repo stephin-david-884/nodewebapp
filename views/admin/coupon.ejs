@@ -163,10 +163,10 @@
                          <td class="text-start"><%=coupons[i].minimumPrice%></td>
                          <td class="text-start"><%=coupons[i].isList%></td>
                          <td class="text-start">
-                             <a href="#" class="btn btn-primary btn-sm" >Edit</a>
+                             <a href="/admin/editCoupon?id=<%=coupons[i]._id%>" class="btn btn-primary btn-sm" >Edit</a>
 
 
-                                                     <a href="#" onclick="" class="btn btn-danger btn-sm" style="height: 35px;width: 105px;"">Delete</a>
+                             <a href="#" onclick="confirmDelete('<%=coupons[i]._id%>')" class="btn btn-danger btn-sm" style="height: 35px;width: 105px;"">Delete</a>
                          </td>
                      </tr>
                      <%}%>
@@ -179,7 +179,7 @@
  </div>
 </section>
 
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 <script>
  function validateForm() {
    document.querySelectorAll(".error-message").forEach((element) => (element.innerHTML = ""));

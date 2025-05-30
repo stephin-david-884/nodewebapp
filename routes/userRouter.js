@@ -8,6 +8,8 @@ const productController = require("../controllers/user/productController")
 const wishlistController = require("../controllers/user/wishlistController")
 const cartController = require("../controllers/user/cartController")
 const orderController = require("../controllers/user/orderController")
+const walletController = require("../controllers/user/walletController")
+
 const multer = require("multer");
 const path = require("path");
 
@@ -111,5 +113,12 @@ router.post("/orderPlaced", userAuth,orderController.orderPlaced);
 router.get("/orderDetails", userAuth,orderController.getOrderDetailsPage);
 router.get('/viewOrderDetails/:orderId', userAuth, orderController.viewOrderDetails)
 router.post("/cancelOrder",userAuth,orderController.cancelOrder);
+router.get("/downloadInvoice/:orderId", userAuth, orderController.getInvoice)
+router.post("/verifyPayment", userAuth, orderController.verifyPayment);
+router.post('/paymentConfirm',userAuth, orderController.paymentConfirm);
+
+//Wallet Management
+router.post("/createWalletOrder", userAuth, walletController.addMoneyToWallet)
+router.post("/verifyWalletPayment", userAuth, walletController.verify_payment)
 
 module.exports = router
