@@ -35,6 +35,45 @@ const generateOrderRazorpay = async (orderId, totalAmount) => {
   }
 };
 
+const calculateCartTotal = async (userId) => {
+  // First validate before converting
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    throw new Error("Invalid user ID format");
+  }
+
+  const objectUserId = new mongoose.Types.ObjectId(userId);
+
+  const grandTotal = await User.aggregate([
+    { $match: { _id: objectUserId } },
+    { $unwind: "$cart" },
+    {
+      $project: {
+        proId: { $toObjectId: "$cart.productId" },
+        quantity: "$cart.quantity",
+      },
+    },
+    {
+      $lookup: {
+        from: "products",
+        localField: "proId",
+        foreignField: "_id",
+        as: "productDetails",
+      },
+    },
+    { $unwind: "$productDetails" },
+    {
+      $group: {
+        _id: null,
+        totalPrice: {
+          $sum: { $multiply: ["$quantity", "$productDetails.salePrice"] },
+        },
+      },
+    },
+  ]);
+
+  return grandTotal.length > 0 ? grandTotal[0].totalPrice : 0;
+};
+
 
 const getCheckoutPage = async (req, res) => {
   try {
@@ -99,11 +138,12 @@ const getCheckoutPage = async (req, res) => {
     const gTotal = req.session.grandTotal;
     const today = new Date().toISOString();
     const totalPrice = grandTotal.length > 0 ? grandTotal[0].totalPrice : 0;
-    const findCoupons = await Coupon.find({
+    const availableCoupons = await Coupon.find({
       isList: true,
-      createdOn: { $lt: new Date(today) },
-      expireOn: { $gt: new Date(today) },
-      minimumPrice: { $lt:totalPrice },
+      createdOn: { $lt: today },
+      expireOn: { $gt: today },
+      minimumPrice: { $lte: totalPrice },
+      userId: { $ne: user }, // Only coupons not already used by this user
     });
     if (findUser.cart.length > 0) {
       res.render("checkoutcart", {
@@ -112,7 +152,7 @@ const getCheckoutPage = async (req, res) => {
         isCart: true,
         userAddress: addressData,
         grandTotal: grandTotal[0].totalPrice,
-        Coupon: findCoupons,
+        availableCoupons,
       });
     } else {
       res.redirect("/shop");
@@ -179,6 +219,11 @@ const orderPlaced = async (req, res) => {
     const finalAmount = totalPrice - discount;
     console.log(`finalAmount: ${finalAmount}`);
 
+      // If wallet selected, check balance before saving order
+    if (payment === "wallet" && finalAmount > findUser.wallet) {
+      return res.json({ payment: false, method: "wallet", success: false });
+    }
+
     let newOrder = new Order({
       product: orderedProducts,
       totalPrice: totalPrice,
@@ -191,6 +236,24 @@ const orderPlaced = async (req, res) => {
       createdOn: Date.now(),
     });
     let orderDone = await newOrder.save();
+    // ✅ Mark the coupon as used by this user (if a session couponId exists)
+if (req.session.couponId) {
+  await Coupon.findByIdAndUpdate(req.session.couponId, {
+    $addToSet: { userId: userId }
+  });
+
+  // Clear coupon session after use
+  delete req.session.couponId;
+}
+
+
+    // ✅ Mark coupon as used by this user (only if a couponId was passed)
+if (req.body.couponId) {
+  await Coupon.updateOne(
+    { _id: req.body.couponId },
+    { $addToSet: { userId: userId } } // prevents duplicates if somehow retried
+  );
+}
 
     await User.updateOne({ _id: userId }, { $set: { cart: [] } });
     for (let orderedProduct of orderedProducts) {
@@ -239,7 +302,7 @@ const orderPlaced = async (req, res) => {
     }
   } catch (error) {
     console.error("Error processing order:", error);
-    res.redirect("/pageNotFound");
+    res.redirect("/pagenotfound");
   }
 };
 
@@ -477,7 +540,46 @@ const paymentConfirm = async (req, res) => {
 };
 
 
+const applyCoupon = async (req, res) => {
+  const { code } = req.body;
+  
+
+  const userId = req.session.user._id;
+
+  try {
+    const coupon = await Coupon.findOne({ name: code, isList: true });
+
+    if (!coupon) {
+      return res.json({ success: false, message: 'Invalid coupon code.' });
+    }
+
+    if (coupon.expireOn < new Date()) {
+      return res.json({ success: false, message: 'Coupon has expired.' });
+    }
+
+    if (coupon.userId.includes(userId)) {
+      return res.json({ success: false, message: 'You have already used this coupon.' });
+    }
+
+    const user = await User.findById(userId);
+    const cartTotal = await calculateCartTotal(userId);
+
+
+    if (cartTotal < coupon.minimumPrice) {
+      return res.json({ success: false, message: `Minimum order ₹${coupon.minimumPrice} required.` });
+    }
+
+    req.session.couponId = coupon._id;
+
+    return res.json({ success: true, discount: coupon.offerPrice, couponId: coupon._id });
+
+  } catch (error) {
+    console.error('Coupon error:', error);
+    return res.json({ success: false, message: 'Something went wrong.' });
+  }
+};
 
 
 
- module.exports = {getCheckoutPage, deleteProduct, orderPlaced, getOrderDetailsPage, viewOrderDetails, cancelOrder,getInvoice, verifyPayment, paymentConfirm}
+
+ module.exports = {getCheckoutPage, deleteProduct, orderPlaced, getOrderDetailsPage, viewOrderDetails, cancelOrder,getInvoice, verifyPayment, paymentConfirm, applyCoupon}
