@@ -106,11 +106,11 @@
                                                 <% if (orders.product[i].productStatus === "Cancel") { %>
                                                     <i>Cancelled</i>
                                                 <% } else { %>
-                                                    <select onchange="handleDropdownChange(this)">
+                                                    <select onchange="handleDropdownChange(this, '<%= orders._id %>')" >
                                                         <option value="" disabled selected><%= orders.status %></option>
                                                         <% if (orders.status === "Confirmed") { %>
                                                             <option value="cancel">Cancel Order</option>
-                                                        <% } else if (orders.status === "Shipped" || orders.status === "Delivered") { %>
+                                                        <% } else if (orders.status === "Delivered") { %>
                                                             <option value="returnrequest">Return Request</option>
                                                         <% } else if (orders.status === "Failed") { %>
                                                             <option value="retry" disabled>Retry Payment</option>
@@ -129,6 +129,26 @@
                 <div class="col-lg-1"></div>
             </div>
         </div>
+        <!-- Return Reason Modal -->
+<div class="modal fade" id="returnReasonModal" tabindex="-1" aria-labelledby="returnReasonModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="returnReasonForm" method="POST">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Return Reason</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <textarea name="reason" class="form-control" required placeholder="Enter reason for return"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Submit Request</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
     </section>
 </main>
 
@@ -204,6 +224,19 @@ function returnRequestOrder(orderId) {
     });
 }
 </script>
+<script>
+function handleDropdownChange(selectElement, orderId) {
+  const value = selectElement.value;
+
+  if (value === 'returnrequest') {
+    const form = document.getElementById('returnReasonForm');
+    form.action = `/order/${orderId}/return`; // adjust path
+    const modal = new bootstrap.Modal(document.getElementById('returnReasonModal'));
+    modal.show();
+  }
+}
+</script>
+
 
 <%- include("../../views/partials/user/footer") %>
 

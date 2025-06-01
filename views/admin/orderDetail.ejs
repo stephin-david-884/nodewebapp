@@ -167,15 +167,22 @@
                 </p>
 
                 <form action="/admin/order/<%= order.orderId %>/status" method="POST">
-                  <label for="status">Status:</label>
-                  <select name="status" id="status" onchange="this.form.submit()" class="form-select form-select-sm mt-1">
-                    <% ['pending', 'shipped', 'out for delivery', 'delivered', 'cancelled'].forEach((option) => { %>
-                      <option value="<%= option %>" <%= order.status === option ? 'selected' : '' %>>
-                        <%= option.charAt(0).toUpperCase() + option.slice(1) %>
-                      </option>
-                    <% }) %>
-                  </select>
-                </form>
+  <label for="status">Status:</label>
+  <select name="status" id="status" onchange="this.form.submit()" class="form-select form-select-sm mt-1">
+    <% ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].forEach((option) => { %>
+      <% 
+        const currentIndex = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].indexOf(order.status);
+        const optionIndex = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].indexOf(option);
+      %>
+      <% if (optionIndex >= currentIndex) { %>
+        <option value="<%= option %>" <%= order.status === option ? 'selected' : '' %>>
+          <%= option %>
+        </option>
+      <% } %>
+    <% }) %>
+  </select>
+</form>
+
               </div>
             </article>
           </div>
@@ -196,13 +203,12 @@
                 </p>
                 <a href="/admin/invoice/<%= order._id %>" ><button class="btn btn-info" style="color: #f7f7f7;">Download Invoice</button></a>
 
-                <form action="/admin/approveReturn/<%= order._id %>" method="POST" style="display:inline;">
-                  <button type="submit" class="btn btn-primary btn-sm mt-2">Approve Return</button>
-                </form>
+                <% if (order.status === 'Return Request') { %>
+                <button type="button" class="btn btn-dark btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#returnRequestModal">
+                  Handle Return Request
+                </button>
+              <% } %>
 
-                <form action="/admin/rejectReturn/<%= order._id %>" method="POST" style="display:inline;">
-                  <button type="submit" class="btn btn-danger btn-sm mt-2">Reject Return</button>
-                </form>
               </div>
             </article>
           </div>
@@ -254,6 +260,31 @@
           </div>
         </div>
       </div>
+      <!-- Return Request Modal -->
+<div class="modal fade" id="returnRequestModal" tabindex="-1" aria-labelledby="returnRequestModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content p-3">
+      <div class="modal-header">
+        <h5 class="modal-title" id="returnRequestModalLabel">Return Request Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Reason for Return:</strong></p>
+        <p><%= order.returnReason || "No reason provided." %></p>
+
+        <div class="d-flex justify-content-between mt-4">
+          <form action="/admin/approveReturn/<%= order.orderId %>" method="POST">
+            <button type="submit" class="btn btn-success">Approve</button>
+          </form>
+          <form action="/admin/rejectReturn/<%= order.orderId %>" method="POST">
+            <button type="submit" class="btn btn-danger">Reject</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
     </section>
   </main>
 </body>

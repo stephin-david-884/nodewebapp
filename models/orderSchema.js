@@ -55,7 +55,7 @@ const orderSchema = new Schema({
     status:{
         type:String,
         required:true,
-        enum:['Pending','Processing','Shipped','Delivered','Cancelled','Return Request','Returned','Confirmed','Failed']
+        enum:['Pending','Processing','Shipped','Delivered','Cancelled','Return Request','Returned','Confirmed','Failed','Rejected']
     },
     createdOn:{
         type:Date,
@@ -71,6 +71,11 @@ const orderSchema = new Schema({
     enum: ["cod", "wallet", "razorpay"],
     default: "cod",
     },
+    returnReason: {
+    type: String,
+    default: ''
+    },
+
 
 })
 

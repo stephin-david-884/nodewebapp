@@ -116,7 +116,9 @@ router.post("/cancelOrder",userAuth,orderController.cancelOrder);
 router.get("/downloadInvoice/:orderId", userAuth, orderController.getInvoice)
 router.post("/verifyPayment", userAuth, orderController.verifyPayment);
 router.post('/paymentConfirm',userAuth, orderController.paymentConfirm);
-router.post('/applyCoupon', userAuth, orderController.applyCoupon)
+router.post('/applyCoupon', userAuth, orderController.applyCoupon);
+router.post('/order/:orderId/return', userAuth, orderController.returnRequest);
+
 
 //Wallet Management
 router.post("/createWalletOrder", userAuth, walletController.addMoneyToWallet)

@@ -91,5 +91,10 @@ router.get("/deletecoupon", adminAuth, couponController.deleteCoupon)
 router.get("/orderList", adminAuth, orderController.listOrders)
 router.get("/order/:orderId", adminAuth, orderController.getOrderDetails)
 router.get('/invoice/:orderId', adminAuth, orderController.getInvoice);
+router.post('/order/:orderId/status', adminAuth, orderController.updateOrderStatus);
+router.post('/approveReturn/:orderId', adminAuth, orderController.approveReturn);
+router.post('/rejectReturn/:orderId', adminAuth, orderController.rejectReturn);
+
+
 
 module.exports = router

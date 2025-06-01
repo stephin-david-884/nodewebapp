@@ -102,7 +102,7 @@ const getOrderDetails = async (req, res) => {
     res.render('orderDetail', { order });
   } catch (err) {
     console.error('Error fetching order details:', err);
-    res.status(500).send('Server error');
+    res.redirect("/pageerror");
   }
 };
 
@@ -190,10 +190,129 @@ const getInvoice = async (req, res) => {
     doc.end();
   } catch (error) {
     console.error(error);
-    res.status(500).send('Error generating invoice');
+    res.redirect("/pageerror");
+  }
+};
+
+const updateOrderStatus = async (req, res) => {
+  try {
+    const orderId = req.params.orderId;
+    const newStatus = req.body.status;
+
+    // Define the order of statuses
+    const ORDER_STATUS_FLOW = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+
+    // Find the order without updating yet
+    const order = await Order.findOne({ orderId });
+
+    if (!order) {
+      return res.status(404).send('Order not found');
+    }
+
+    const currentIndex = ORDER_STATUS_FLOW.indexOf(order.status);
+    const newIndex = ORDER_STATUS_FLOW.indexOf(newStatus);
+
+    // Prevent moving to an earlier status (unless same status)
+     if (newIndex === -1 || newIndex < currentIndex) {
+      return res.status(400).send('Invalid status transition');
+    }
+
+    // Update the order status
+    order.status = newStatus;
+    await order.save();
+
+    res.redirect(`/admin/order/${orderId}`); // Redirect to order details page
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    res.redirect("/pageerror");
   }
 };
 
 
+const approveReturn = async (req, res) => {
+  try {
+    const orderId = req.params.orderId;
 
-module.exports = {listOrders, getOrderDetails, getInvoice}
+    // Fetch the order
+    const order = await Order.findOne({orderId:orderId}); 
+    
+    if (!order) {
+      return res.status(404).send('Order not found');
+    }
+
+    // Validate return status
+    if (order.status !== 'Return Request') {
+      return res.status(400).send('Invalid return request');
+    }
+
+    // Get refund amount (ensure it's a number)
+    const refundAmount = Number(order.totalPrice);
+    if (isNaN(refundAmount)) {
+      return res.status(400).send('Invalid refund amount');
+    }
+
+    // Fetch user
+    const user = await User.findById(order.userId);
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+
+    // Refund to wallet
+    user.wallet = Number(user.wallet || 0) + refundAmount;
+    user.history.push({
+    amount: refundAmount,
+    status: "credit",
+    date: new Date()
+  });
+    await user.save();
+
+       // 🔁 Increment product quantities back
+    for (const item of order.product) {
+      const product = await Product.findById(item._id);
+      if (product) {
+        product.quantity += item.quantity;
+        await product.save();
+      }
+    }
+
+    // Update order status
+    order.status = 'Returned';
+    await order.save();
+
+   res.redirect(`/admin/order/${orderId}`);
+
+  } catch (error) {
+    console.error('Error in approveReturn:', error);
+    res.redirect("/pagerror")
+  }
+};
+
+const rejectReturn = async (req, res) => {
+  try {
+    const orderId = req.params.orderId;
+
+    // Find the order by orderId (not _id)
+    const order = await Order.findOne({ orderId: orderId });
+
+    if (!order) {
+      return res.status(404).send('Order not found');
+    }
+
+    // Only allow rejection if it's in "Return Request" status
+    if (order.status !== 'Return Request') {
+      return res.status(400).send('Return request cannot be rejected');
+    }
+
+    // Update order status
+    order.status = 'Rejected';
+    await order.save();
+
+    res.redirect(`/admin/order/${orderId}`);
+  } catch (error) {
+    console.error('Error in rejectReturn:', error);
+    res.status(500).send('Something went wrong');
+  }
+};
+
+
+module.exports = {listOrders, getOrderDetails, getInvoice, updateOrderStatus, approveReturn, rejectReturn}

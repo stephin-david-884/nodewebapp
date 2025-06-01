@@ -579,7 +579,29 @@ const applyCoupon = async (req, res) => {
   }
 };
 
+const returnRequest = async (req, res) => {
+  try {
+    const orderId = req.params.orderId;
+    const reason = req.body.reason;
+
+    const order = await Order.findByIdAndUpdate(
+      orderId,
+      { status: 'Return Request', returnReason: reason },
+      { new: true }
+    );
+
+    if (!order) {
+      return res.status(404).send('Order not found');
+    }
+
+    res.redirect(`/orderDetails?id=${orderId}`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Something went wrong');
+  }
+};
 
 
 
- module.exports = {getCheckoutPage, deleteProduct, orderPlaced, getOrderDetailsPage, viewOrderDetails, cancelOrder,getInvoice, verifyPayment, paymentConfirm, applyCoupon}
+
+ module.exports = {getCheckoutPage, deleteProduct, orderPlaced, getOrderDetailsPage, viewOrderDetails, cancelOrder,getInvoice, verifyPayment, paymentConfirm, applyCoupon, returnRequest}
