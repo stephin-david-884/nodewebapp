@@ -157,41 +157,49 @@
                     </div>
 
                     <div class="coupon-section mb-3">
-                        <label for="couponCode">Have a coupon?</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="couponCode" placeholder="Enter coupon code">
-                            <button class="btn btn-primary" id="applyCouponBtn">Apply</button>
-                        </div>
-                        <p id="couponFeedback" class="text-danger mt-2"></p>
-                        <button class="btn btn-danger mt-2 d-none" id="removeCouponBtn">Remove Coupon</button>
-                    </div>
+    <label for="couponCode">Have a coupon?</label>
+    <div class="input-group">
+        <input type="text" class="form-control" id="couponCode" placeholder="Enter coupon code">
+        <button class="btn btn-primary" id="applyCouponBtn">Apply</button>
+    </div>
+    <p id="couponFeedback" class="text-danger mt-2"></p>
+    <button class="btn btn-danger mt-2 d-none" id="removeCouponBtn">Remove Coupon</button>
+</div>
 
-                    <div class="available-coupons mt-4">
-                    <h5 class="mb-3">Available Coupons</h5>
-                    <div class="row">
-                        <% availableCoupons.forEach(coupon => { %>
-                        <div class="col-md-6 mb-3">
-                            <div class="card shadow-sm border-0 h-100">
-                            <div class="card-body d-flex justify-content-between align-items-center">
-                                <div>
-                                <h6 class="card-title mb-1">
-                                    <span class="badge bg-success me-2"><%= coupon.name %></span>
-                                </h6>
-                                <p class="card-text mb-0 small text-muted">
-                                    Save ₹<%= coupon.offerPrice %> on min order of ₹<%= coupon.minimumPrice %>
-                                </p>
-                                </div>
-                                <button 
-                                class="btn btn-outline-primary btn-sm copy-btn" 
-                                data-coupon="<%= coupon.name %>"
-                                >
-                                Copy
-                                </button>
-                            </div>
-                            </div>
-                        </div>
-                        <% }) %>
+<div class="available-coupons mt-4">
+    <h5 class="mb-3">Available Coupons</h5>
+    <div class="row">
+        <% availableCoupons.forEach(coupon => { %>
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-1">
+                            <span class="badge bg-success me-2"><%= coupon.name %></span>
+                            <% if (!coupon.isList) { %>
+                                <span class="badge bg-warning text-dark">Gifted</span>
+                            <% } %>
+                        </h6>
+                        <p class="card-text mb-0 small text-muted">
+                            Save ₹<%= coupon.offerPrice %> on min order of ₹<%= coupon.minimumPrice %>
+                        </p>
+                        <p class="card-text mb-0 small text-muted">
+                            Valid till: <%= new Date(coupon.expireOn).toDateString() %>
+                        </p>
                     </div>
+                    <button 
+                        class="btn btn-outline-primary btn-sm copy-btn" 
+                        data-coupon="<%= coupon.name %>"
+                    >
+                        Copy
+                    </button>
+                </div>
+            </div>
+        </div>
+        <% }) %>
+    </div>
+</div>
+
                     </div>
                     <div class="payment_method">
                             <div class="mb-25">

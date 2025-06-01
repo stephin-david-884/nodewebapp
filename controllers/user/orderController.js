@@ -139,12 +139,21 @@ const getCheckoutPage = async (req, res) => {
     const today = new Date().toISOString();
     const totalPrice = grandTotal.length > 0 ? grandTotal[0].totalPrice : 0;
     const availableCoupons = await Coupon.find({
-      isList: true,
-      createdOn: { $lt: today },
-      expireOn: { $gt: today },
-      minimumPrice: { $lte: totalPrice },
-      userId: { $ne: user }, // Only coupons not already used by this user
-    });
+  $and: [
+    { createdOn: { $lt: today } },
+    { expireOn: { $gt: today } },
+    { minimumPrice: { $lte: totalPrice } },
+    {
+      $or: [
+        { isList: true },
+        { userId: user }
+      ]
+    },
+    { usedBy: { $ne: user } } // ✅ exclude already used by this user
+  ]
+});
+
+
     if (findUser.cart.length > 0) {
       res.render("checkoutcart", {
         product: data,
@@ -237,23 +246,13 @@ const orderPlaced = async (req, res) => {
     });
     let orderDone = await newOrder.save();
     // ✅ Mark the coupon as used by this user (if a session couponId exists)
-if (req.session.couponId) {
-  await Coupon.findByIdAndUpdate(req.session.couponId, {
-    $addToSet: { userId: userId }
-  });
-
-  // Clear coupon session after use
-  delete req.session.couponId;
-}
-
-
-    // ✅ Mark coupon as used by this user (only if a couponId was passed)
-if (req.body.couponId) {
-  await Coupon.updateOne(
-    { _id: req.body.couponId },
-    { $addToSet: { userId: userId } } // prevents duplicates if somehow retried
-  );
-}
+ if (req.session.couponId) {
+      await Coupon.updateOne(
+        { _id: req.session.couponId },
+        { $addToSet: { usedBy: userId } }  // Track who used the coupon
+      );
+      delete req.session.couponId;
+    }
 
     await User.updateOne({ _id: userId }, { $set: { cart: [] } });
     for (let orderedProduct of orderedProducts) {
@@ -542,12 +541,17 @@ const paymentConfirm = async (req, res) => {
 
 const applyCoupon = async (req, res) => {
   const { code } = req.body;
-  
-
   const userId = req.session.user._id;
 
   try {
-    const coupon = await Coupon.findOne({ name: code, isList: true });
+    // 👉 Find coupon that is either public OR private but assigned to this user
+    const coupon = await Coupon.findOne({
+      name: code,
+      $or: [
+        { isList: true },
+        { isList: false, userId: userId }  // private coupon for specific user
+      ]
+    });
 
     if (!coupon) {
       return res.json({ success: false, message: 'Invalid coupon code.' });
@@ -557,13 +561,15 @@ const applyCoupon = async (req, res) => {
       return res.json({ success: false, message: 'Coupon has expired.' });
     }
 
-    if (coupon.userId.includes(userId)) {
-      return res.json({ success: false, message: 'You have already used this coupon.' });
-    }
+    if (coupon.usedBy.some(id => id.toString() === userId.toString())) {
+  return res.json({ success: false, message: 'You have already used this coupon.' });
+}
 
-    const user = await User.findById(userId);
+
+ 
+
+
     const cartTotal = await calculateCartTotal(userId);
-
 
     if (cartTotal < coupon.minimumPrice) {
       return res.json({ success: false, message: `Minimum order ₹${coupon.minimumPrice} required.` });
@@ -578,6 +584,7 @@ const applyCoupon = async (req, res) => {
     return res.json({ success: false, message: 'Something went wrong.' });
   }
 };
+
 
 const returnRequest = async (req, res) => {
   try {

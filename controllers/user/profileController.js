@@ -6,6 +6,7 @@ const bcrypt = require("bcrypt")
 const env = require("dotenv").config();
 const session = require("express-session");
 const { text } = require("express");
+const generateReferralCode = require('../../utils/generateReferralCode')
 
 
 function generateOtp() {
@@ -168,6 +169,12 @@ const userProfile = async (req, res) => {
     const userData = await User.findById(userId);
     const addressData = await Address.findOne({ userId });
 
+      // ✅ Set referralCode if not already set
+    if (!userData.referralCode) {
+      userData.referralCode = generateReferralCode();
+      await userData.save(); // Save to DB so it doesn't regenerate
+    }
+
     const page = parseInt(req.query.page) || 1;
     const limit = 5;
     const skip = (page - 1) * limit;
@@ -202,7 +209,8 @@ const userProfile = async (req, res) => {
       totalPages,
       walletTransactions: paginatedHistory,
       walletCurrentPage: walletPage,
-      walletTotalPages: totalWalletPages
+      walletTotalPages: totalWalletPages,
+      referralCode: userData.referralCode,
 
     });
 

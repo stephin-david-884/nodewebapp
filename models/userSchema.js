@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const { search } = require("../app");
 const {Schema} = mongoose;
+const generateReferralCode = require('../utils/generateReferralCode')
 
 const userSchema = new Schema({
     name:{
@@ -89,8 +90,14 @@ const userSchema = new Schema({
         type: Date,
         default: Date.now,
     },
-    referalCode:{
-        type:String,
+      referralCode: {
+    type: String,
+    unique: true,
+    
+    },
+    referredBy: {
+        type: String,
+        default: null
     },
     redeemed:{
         type:Boolean,

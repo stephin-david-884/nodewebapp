@@ -477,17 +477,24 @@
 
 
                <div class="tab-pane fade" id="referal" role="tabpanel" aria-labelledby="track-orders-tab">
-                 <div class="card">
-                   <div class="card-header">
-                     <h5 class="mb-0">Referal</h5>
-                   </div>
-                   <div class="card-body">
-                     <h6 class="mb-3">Refer your friends and earn money!</h6>
-                     <p>Share this link: <strong>></strong></p>
-                     <p>Earned: ₹</p>
-                   </div>
-                 </div>
-               </div>
+                <div class="card">
+                  <div class="card-header">
+                    <h5 class="mb-0">Referral</h5>
+                  </div>
+                  <div class="card-body">
+                    <h6 class="mb-3">Refer your friends and earn rewards!</h6>
+                    <p>Your Referral Code: <strong><%= referralCode %></strong></p>
+
+                    <div class="input-group">
+                      <input type="text" id="referralLink" class="form-control" readonly 
+                            value="https://yourdomain.com/register?ref=<%= referralCode %>">
+                      <button class="btn btn-outline-secondary" type="button" onclick="copyReferralLink()">Copy</button>
+                    </div>
+                    <small class="text-muted">Share this link with your friends.</small>
+                  </div>
+                </div>
+              </div>
+
        </div>
      </div>
    </div>
@@ -608,6 +615,14 @@
     if (tabTrigger) {
       new bootstrap.Tab(tabTrigger).show();
     }
+  }
+</script>
+<script>
+  function copyReferralLink() {
+    const linkInput = document.getElementById("referralLink");
+    linkInput.select();
+    document.execCommand("copy");
+    alert("Referral link copied to clipboard!");
   }
 </script>
 
