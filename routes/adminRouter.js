@@ -95,6 +95,10 @@ router.post('/order/:orderId/status', adminAuth, orderController.updateOrderStat
 router.post('/approveReturn/:orderId', adminAuth, orderController.approveReturn);
 router.post('/rejectReturn/:orderId', adminAuth, orderController.rejectReturn);
 
+//Dashboard Management
+// Route
+router.get('/sales-summary',adminAuth, adminController.getDashboardSummary);
+router.get('/download-sales-report',adminAuth, adminController.downloadSalesReport);
 
 
 module.exports = router

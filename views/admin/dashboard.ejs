@@ -1,10 +1,151 @@
 <%- include("../../views/partials/admin/header") %>
 <section class="content-main">
-    <div class="content-header">
-        <div>
-            <h2 class="content-title card-title">Dashboard </h2>
-        </div>
-       
+  <div class="content-header">
+    <div>
+      <h2 class="content-title card-title">Dashboard</h2>
     </div>
+  </div>
+<div class="row mb-4">
+  <div class="col-md-4">
+    <div class="card p-3 bg-light">
+      <h5>Total Orders</h5>
+      <h3 id="summaryOrders">-</h3>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card p-3 bg-light">
+      <h5>Total Sales</h5>
+      <h3 id="summarySales">₹-</h3>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card p-3 bg-light">
+      <h5>Total Discount</h5>
+      <h3 id="summaryDiscount">₹-</h3>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title">Sales in the Last 7 Days</h5>
+    <canvas id="salesChart" height="100"></canvas>
+  </div>
+</div>
+
+  <!-- Sales Report Filters -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <form id="salesFilterForm">
+        <label for="range">Date Range:</label>
+        <select id="range" name="range" class="form-select">
+          <option value="daily">Today</option>
+          <option value="weekly">This Week</option>
+          <option value="monthly">This Month</option>
+          <option value="yearly">This Year</option>
+          <option value="custom">Custom</option>
+        </select>
+        
+        <div id="customDate" style="display: none;">
+          <label for="start">From:</label>
+          <input type="date" id="startDate" name="startDate">
+          <label for="end">To:</label>
+          <input type="date" id="endDate" name="endDate">
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-2">Filter</button>
+        <button id="downloadPdf" class="btn btn-outline-danger mt-2">PDF</button>
+        <button id="downloadExcel" class="btn btn-outline-success mt-2">Excel</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Sales Summary & Chart -->
+  <div id="salesSummary" class="row"></div>
+  <canvas id="salesChart"></canvas>
 </section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.getElementById('range').addEventListener('change', function () {
+    document.getElementById('customDate').style.display = this.value === 'custom' ? 'block' : 'none';
+  });
+
+  document.getElementById('salesFilterForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const response = await fetch('/admin/sales-report', {
+      method: 'POST',
+      body: new URLSearchParams(formData),
+    });
+    const data = await response.json();
+    
+    // Populate summary
+    document.getElementById('salesSummary').innerHTML = `
+      <div class="col">Total Orders: ${data.totalOrders}</div>
+      <div class="col">Total Sales: ₹${data.totalAmount}</div>
+      <div class="col">Total Discount: ₹${data.totalDiscount}</div>
+    `;
+
+    // Update chart
+    const chart = new Chart(document.getElementById('salesChart'), {
+      type: 'bar',
+      data: {
+        labels: data.labels,
+        datasets: [{
+          label: 'Sales',
+          data: data.sales,
+          backgroundColor: '#4e73df',
+        }]
+      }
+    });
+  });
+
+  document.getElementById('downloadPdf').addEventListener('click', () => {
+  const range = document.getElementById('range').value;
+  const startDate = document.getElementById('startDate')?.value || '';
+  const endDate = document.getElementById('endDate')?.value || '';
+  const query = `?format=pdf&range=${range}&startDate=${startDate}&endDate=${endDate}`;
+  window.location.href = '/admin/download-sales-report' + query;
+});
+
+document.getElementById('downloadExcel').addEventListener('click', () => {
+  const range = document.getElementById('range').value;
+  const startDate = document.getElementById('startDate')?.value || '';
+  const endDate = document.getElementById('endDate')?.value || '';
+  const query = `?format=excel&range=${range}&startDate=${startDate}&endDate=${endDate}`;
+  window.location.href = '/admin/download-sales-report' + query;
+});
+
+</script>
+<script>
+  async function fetchInitialDashboardData() {
+    const res = await fetch("/admin/sales-summary");
+    const data = await res.json();
+
+    document.getElementById("summaryOrders").innerText = data.totalOrders;
+    document.getElementById("summarySales").innerText = `₹${data.totalAmount}`;
+    document.getElementById("summaryDiscount").innerText = `₹${data.totalDiscount}`;
+
+    const ctx = document.getElementById("salesChart").getContext("2d");
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: data.labels,
+        datasets: [{
+          label: 'Daily Sales ₹',
+          data: data.sales,
+          borderColor: '#4e73df',
+          fill: true,
+          backgroundColor: 'rgba(78, 115, 223, 0.1)',
+          tension: 0.3,
+        }]
+      }
+    });
+  }
+
+  fetchInitialDashboardData();
+</script>
+
+
 <%- include("../../views/partials/admin/footer") %>
