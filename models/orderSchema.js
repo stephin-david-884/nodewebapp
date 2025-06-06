@@ -24,6 +24,12 @@ const orderSchema = new Schema({
         price: Number,
         image: String,
         quantity: Number,
+        size: {
+        type: String,
+        enum: ['S', 'M', 'L'],
+        required: true
+        },
+
         productStatus: {
             type: String,
             default: "Confirmed",
@@ -55,7 +61,7 @@ const orderSchema = new Schema({
     status:{
         type:String,
         required:true,
-        enum:['Pending','Processing','Shipped','Delivered','Cancelled','Return Request','Returned','Confirmed','Failed','Rejected']
+        enum:['Pending','Processing','Shipped','Delivered','Cancelled','Return Request','Returned','Confirmed','Failed','Rejected','Partially Cancelled']
     },
     createdOn:{
         type:Date,

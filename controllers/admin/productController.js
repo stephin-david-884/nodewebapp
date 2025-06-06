@@ -24,7 +24,7 @@ const getProductAddPage = async (req,res) => {
 
 const addProducts = async (req, res) => {
     try {
-      const { productName, description, brand, category, regularPrice, salePrice, quantity, color, processor, graphicsCard, storages, display, operatingSystem, boxContains } = req.body;
+      const { productName, description, brand, category, regularPrice, salePrice, color,sizeS, sizeM, sizeL} = req.body;
       
     
       const productExists = await Product.findOne({ productName });
@@ -38,10 +38,8 @@ const addProducts = async (req, res) => {
         fs.mkdirSync(uploadDir, { recursive: true });
       }
   
-     
-      const imageFilenames = [];
-  
-      
+     //Process images
+      const imageFilenames = [];      
       for (let i = 1; i <= 4; i++) {
         const croppedImageData = req.body[`croppedImage${i}`];
       
@@ -66,27 +64,30 @@ const addProducts = async (req, res) => {
         return res.status(400).json({ success: false, message: "Please upload all 4 product images" });
       }
   
-      
+      //Validate Category
       const foundCategory = await Category.findOne({ name: category });
       if (!foundCategory) {
         return res.status(400).json({ success: false, message: "Category not found" });
       }
-  
+      
+      const parsedSizeS = parseInt(sizeS) || 0;
+      const parsedSizeM = parseInt(sizeM) || 0;
+      const parsedSizeL = parseInt(sizeL) || 0;
+      const totalQuantity = parsedSizeS + parsedSizeM + parsedSizeL;
       
       const newProduct = new Product({
         productName,
-        description,
-        
+        description,        
         brand,
         category:foundCategory._id, 
         regularPrice,
         salePrice,
         createdOn:new Date(),
-        quantity,
+        
         sizes: {
-          S: quantity,
-          M: quantity,
-          L: quantity
+          S: parsedSizeS,
+          M: parsedSizeM,
+          L: parsedSizeL
         },
         color,
         
@@ -116,7 +117,7 @@ const getAllProducts =async (req,res) => {
         })
         .limit(limit*1)
         .skip((page-1)*limit)
-        .populate('category')
+        .populate('category')        
         .exec();
 
         const count = await Product.find({
@@ -231,19 +232,20 @@ const getEditProduct = async (req, res) => {
     }
   }
   
-  const editProduct = async (req, res) => {
+const editProduct = async (req, res) => {
     try {
       const id = req.params.id
       const {
         productName,
-        description,
-        
+        description,        
         regularPrice,
-        salePrice,
-        quantity,
+        salePrice,        
         color,
         brand,       
         category,
+        sizeS,
+        sizeM,
+        sizeL
       } = req.body
   
       const existingProduct = await Product.findOne({
@@ -256,13 +258,20 @@ const getEditProduct = async (req, res) => {
           .status(400)
           .json({ success: false, message: "Product with this name already exists. Please try another name." })
       }
+
+       // Construct sizes object
+    const sizes = {
+      S: parseInt(sizeS) || 0,
+      M: parseInt(sizeM) || 0,
+      L: parseInt(sizeL) || 0,
+    };
   
       const updateFields = {
         productName,
         description,
         regularPrice,
         salePrice,
-        quantity,
+        sizes,
         color,
         brand,
         category,

@@ -159,7 +159,17 @@
                                  <ul class="product-meta font-xs color-grey mt-50">
                                      <li class="mb-5">Stock Code: <a href="#">FWM15VKT</a></li>
                                      <li class="mb-5">Tags: <a href="#" rel="tag"></a> <a href="#" rel="tag"><%=category.name%></a> <a href="#" rel="tag"></a> </li>
-                                     <li>Availability:<span class="in-stock text-success ml-5"><%=quantity%> Items in stock</span></li>
+                                     <li>Availability:
+                                      <% if (product.sizes.S > 0) { %>
+                                        <span class="in-stock text-success ml-5">S </span>
+                                      <% } %>
+                                      <% if (product.sizes.M > 0) { %>
+                                        <span class="in-stock text-success ml-5">M </span>
+                                      <% } %>
+                                      <% if (product.sizes.L > 0) { %>
+                                        <span class="in-stock text-success ml-5">L </span>
+                                      <% } %>
+                                     </li>
                                  </ul>
                              </div>
                          </div>

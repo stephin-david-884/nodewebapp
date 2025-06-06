@@ -80,7 +80,11 @@ const loadShoppingPage = async (req, res) => {
             isBlocked: false,
             category: { $in: categoryIds },
             brand: { $in: brandNames }, // Filter by active brands
-            quantity: { $gt: 0 },
+              $or: [
+                { "sizes.S": { $gt: 0 } },
+                { "sizes.M": { $gt: 0 } },
+                { "sizes.L": { $gt: 0 } }
+            ]
         };
 
         const products = await Product.find(query)

@@ -26,7 +26,7 @@ const productDetails = async (req,res) => {
         res.render("product-details",{
             user:userData,
             product:product,
-            quantity:product.quantity,
+            
             totalOffer:totalOffer,
             category:findCategory,
             relatedProducts

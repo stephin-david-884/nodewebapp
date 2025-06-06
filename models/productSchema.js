@@ -31,10 +31,7 @@ const productSchema = new Schema({
         type:Number,
         default:0
     },
-    quantity:{
-        type:Number,
-        default:0
-    },
+    
     sizes: {
     S: { type: Number, default: 0 },
     M: { type: Number, default: 0 },

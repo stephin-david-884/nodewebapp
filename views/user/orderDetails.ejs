@@ -71,6 +71,7 @@
                                 <tr class="text-center">
                                     <th width="30%">Product</th>
                                     <th width="20%">Name</th>
+                                    <th width="10%">Size</th>
                                     <th width="10%">Unit Price</th>
                                     <th width="10%">Quantity</th>
                                     <th class="text-center" width="10%" class="text-end">Total</th>
@@ -93,6 +94,9 @@
                                                     <%= orders.product[i].name || orders.product[i].title %>
                                                 </div>
                                             </td>
+                                             <td class="text-center">
+                                            <%= orders.product[i].size %> <!-- 👈 Show Size -->
+                                             </td>
                                             <td class="text-center">
                                                 ₹<%= orders.product[i].price.toLocaleString() %>
                                             </td>
@@ -106,16 +110,17 @@
                                                 <% if (orders.product[i].productStatus === "Cancel") { %>
                                                     <i>Cancelled</i>
                                                 <% } else { %>
-                                                    <select onchange="handleDropdownChange(this, '<%= orders._id %>')" >
-                                                        <option value="" disabled selected><%= orders.status %></option>
-                                                        <% if (orders.status === "Confirmed") { %>
-                                                            <option value="cancel">Cancel Order</option>
-                                                        <% } else if (orders.status === "Delivered") { %>
-                                                            <option value="returnrequest">Return Request</option>
-                                                        <% } else if (orders.status === "Failed") { %>
-                                                            <option value="retry" disabled>Retry Payment</option>
-                                                        <% } %>
+                                                    <select onchange="handleDropdownChange(this, '<%= orders._id %>', <%= i %>)">
+                                                    <option value="" disabled selected><%= orders.status %></option>
+                                                    <% if (orders.status === "Confirmed") { %>
+                                                        <option value="cancel">Cancel Order</option>
+                                                    <% } else if (orders.status === "Delivered") { %>
+                                                        <option value="returnrequest">Return Request</option>
+                                                    <% } else if (orders.status === "Failed") { %>
+                                                        <option value="retry" disabled>Retry Payment</option>
+                                                    <% } %>
                                                     </select>
+
                                                 <% } %>
                                             </td>
                                         </tr>
@@ -162,50 +167,54 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 
 <script>
-function handleDropdownChange(selectElement) {
-    var selectedValue = selectElement.value;
-    var orderId = document.getElementById("orderId").value;
+function handleDropdownChange(selectElement, orderId, productIndex) {
+  const selectedValue = selectElement.value;
 
-    if (selectedValue === "cancel") {
-        confirmCancelOrder(orderId);
-    } else if (selectedValue == "returnrequest") {
-        returnRequestOrder(orderId);
+  if (selectedValue === "cancel") {
+    confirmCancelOrder(orderId, productIndex);
+  } else if (selectedValue === "returnrequest") {
+    const form = document.getElementById('returnReasonForm');
+    form.action = `/order/${orderId}/return`; 
+    const modal = new bootstrap.Modal(document.getElementById('returnReasonModal'));
+    modal.show();
+  }
+}
+
+
+function confirmCancelOrder(orderId, productIndex) {
+  Swal.fire({
+    title: 'Confirm Cancel Order',
+    text: 'Are you sure you want to cancel this order item?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, cancel it!'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      cancelOrderItem(orderId, productIndex);
     }
+  });
 }
 
-function confirmCancelOrder(orderId) {
-    Swal.fire({
-        title: 'Confirm Cancel Order',
-        text: 'Are you sure you want to cancel this order?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, cancel it!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            console.log('working');
-            cancelOrder(orderId);
-        }
-    });
+function cancelOrderItem(orderId, productIndex) {
+  $.ajax({
+    url: '/cancelOrder',
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify({ orderId, productIndex }),
+    success: (response) => {
+      Swal.fire('Cancelled!', 'The order item has been cancelled.', 'success').then(() => {
+        window.location.reload();
+      });
+    },
+    error: (error) => {
+      Swal.fire('Error!', 'There was an error cancelling the order item.', 'error');
+      console.error(error);
+    }
+  });
 }
 
-function cancelOrder(orderId) {
-    $.ajax({
-        url: '/cancelOrder',
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({ orderId: orderId }),
-        success: (response) => {
-            if (response.result.modifiedCount === 1) {
-                window.location.reload();
-            }
-        },
-        error: (error) => {
-            alert(error);
-        }
-    });
-}
 
 function returnRequestOrder(orderId) {
     $.ajax({
@@ -224,18 +233,7 @@ function returnRequestOrder(orderId) {
     });
 }
 </script>
-<script>
-function handleDropdownChange(selectElement, orderId) {
-  const value = selectElement.value;
 
-  if (value === 'returnrequest') {
-    const form = document.getElementById('returnReasonForm');
-    form.action = `/order/${orderId}/return`; // adjust path
-    const modal = new bootstrap.Modal(document.getElementById('returnReasonModal'));
-    modal.show();
-  }
-}
-</script>
 
 
 <%- include("../../views/partials/user/footer") %>

@@ -217,6 +217,39 @@ const updateOrderStatus = async (req, res) => {
       return res.status(400).send('Invalid status transition');
     }
 
+    // If admin cancels the order
+    if (newStatus === 'Cancelled') {
+      for (let item of order.product) {
+        // Mark product as cancelled
+        item.productStatus = 'Cancel';
+
+        // Restock by size using your schema format
+        const product = await Product.findById(item._id);
+        if (product && product.sizes && product.sizes[item.size] !== undefined) {
+          product.sizes[item.size] += item.quantity;
+          await product.save();
+        }
+      }
+
+    // Refund if payment method was Razorpay or Wallet
+      if (['razorpay', 'wallet'].includes(order.payment)) {
+        const user = await User.findById(order.userId);
+        if (user) {
+          user.wallet += order.finalAmount;
+
+           
+
+          user.history.push({
+            amount: order.finalAmount,
+            status: 'credit',
+            
+            date: new Date()
+          });
+          await user.save();
+        }
+      }
+    }  
+
     // Update the order status
     order.status = newStatus;
     await order.save();
@@ -246,7 +279,7 @@ const approveReturn = async (req, res) => {
     }
 
     // Get refund amount (ensure it's a number)
-    const refundAmount = Number(order.totalPrice);
+    const refundAmount = Number(order.finalAmount);
     if (isNaN(refundAmount)) {
       return res.status(400).send('Invalid refund amount');
     }

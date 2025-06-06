@@ -71,15 +71,18 @@ const addToCart = async (req, res) => {
       return res.json({ status: "Product not found" });
     }
 
-    if (product.quantity <= 0) {
-      return res.json({ status: "Out of stock" });
+     const availableStock = product.sizes?.[selectedSize];
+
+    if (!availableStock || availableStock <= 0) {
+      return res.json({ status: false, message: "Selected size is out of stock" });
     }
 
-    const cartIndex = findUser.cart.findIndex((item) => item.productId == id && item.size === selectedSize);
+     const cartIndex = findUser.cart.findIndex(
+      (item) => item.productId.toString() === id && item.size === selectedSize);
 
     if (cartIndex === -1) {
       // New product to cart
-      const quantityToAdd = Math.min(selectedQuantity, 3, product.quantity); // ✅ max 3
+      const quantityToAdd = Math.min(selectedQuantity, 3, availableStock); // ✅ max 3
       await User.findByIdAndUpdate(userId, {
         $addToSet: {
           cart: {
@@ -99,7 +102,7 @@ const addToCart = async (req, res) => {
         return res.json({ status: false, message: "Maximum 3 units per product allowed" }); // ✅ show warning
       }
 
-      if (totalDesiredQuantity <= product.quantity) {
+      if (totalDesiredQuantity <= availableStock) {
         await User.updateOne(
           { _id: userId, "cart.productId": id, "cart.size": selectedSize },
           { $set: { "cart.$.quantity": totalDesiredQuantity } }
@@ -111,7 +114,7 @@ const addToCart = async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    return res.redirect("/pageNotFound");
+    return res.redirect("/pagenotfound");
   }
 };
 
@@ -238,23 +241,47 @@ const updateCartSize = async (req, res) => {
 
     const user = await User.findById(userId);
 
+    if (!user) {
+      return res.status(404).json({ status: false, message: 'User not found' });
+    }
+
+    // Find the cart item with matching product ID and size
     const item = user.cart.find(item =>
       item.productId.toString() === productId &&
       item.size === currentSize
     );
 
-    if (item) {
-      item.size = newSize;
-      await user.save();
-      return res.json({ status: true });
-    } else {
-      return res.json({ status: false, message: 'Item not found in cart.' });
+    if (!item) {
+      return res.status(404).json({ status: false, message: 'Item not found in cart.' });
     }
+
+    // Optional: Prevent setting to the same size
+    if (item.size === newSize) {
+      return res.json({ status: false, message: 'Selected size is already applied.' });
+    }
+
+    // Optional: Validate if newSize exists in product's available sizes and is in stock
+    const product = await Product.findById(productId);
+    if (!product || !product.sizes || typeof product.sizes[newSize] === 'undefined') {
+      return res.json({ status: false, message: 'Invalid size selection.' });
+    }
+
+    if (product.sizes[newSize] <= 0) {
+      return res.json({ status: false, message: 'Selected size is out of stock.' });
+    }
+
+    // Update the size
+    item.size = newSize;
+    await user.save();
+
+    return res.json({ status: true });
+
   } catch (err) {
-    console.error(err);
-    res.json({ status: false, message: 'Server error' });
+    console.error('Error updating cart size:', err);
+    return res.status(500).json({ status: false, message: 'Server error' });
   }
 };
+
 
 
 

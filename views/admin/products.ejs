@@ -66,7 +66,12 @@
                     </button>
                     <%}%>
                 </td>
-                <td><%=data[i].quantity%></td>
+                <td>
+                S: <%= data[i].sizes.S %><br>
+                M: <%= data[i].sizes.M %><br>
+                L: <%= data[i].sizes.L %>
+                </td>
+
                 <td>
                 
                     <%if(data[i].isBlocked===false){%>

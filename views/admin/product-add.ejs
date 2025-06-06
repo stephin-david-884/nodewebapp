@@ -170,10 +170,24 @@
             </div>
 
             <div class="form-group">
-                <label for="quantity">Quantity</label>
-                <input type="number" name="quantity" id="quantity" placeholder="Enter quantity">
-                <div id="quantity-error" class="error-message"></div>
+            <label>Size-wise Quantity</label>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <div>
+                    <label for="sizeS">S</label>
+                    <input type="number" name="sizeS" id="sizeS" min="0" placeholder="Qty" style="width: 80px;">
+                </div>
+                <div>
+                    <label for="sizeM">M</label>
+                    <input type="number" name="sizeM" id="sizeM" min="0" placeholder="Qty" style="width: 80px;">
+                </div>
+                <div>
+                    <label for="sizeL">L</label>
+                    <input type="number" name="sizeL" id="sizeL" min="0" placeholder="Qty" style="width: 80px;">
+                </div>
             </div>
+            <div id="sizes-error" class="error-message"></div>
+            </div>
+
 
             <div class="form-group">
                 <label for="color">Color</label>
@@ -333,7 +347,7 @@
 
         // Form validation
         let isValid = true;
-        const requiredFields = ['productName',  'brand', 'regularPrice', 'salePrice', 'quantity', 'color', 'category'];
+        const requiredFields = ['productName',  'brand', 'regularPrice', 'salePrice', 'color', 'category'];
 
         // Clear previous error messages
         requiredFields.forEach(field => {
@@ -359,22 +373,11 @@ if (!description) {
 
 
         // Get price and quantity values
-        const quantity = parseInt(document.getElementById('quantity').value);
+        
         const regularPrice = parseFloat(document.getElementById('regularPrice').value);
         const salePrice = parseFloat(document.getElementById('salePrice').value);
 
-        // Validate quantity
-        if (isNaN(quantity) || quantity < 0) {
-            isValid = false;
-            Swal.fire({
-                title: 'Invalid Quantity!',
-                text: 'Quantity cannot be less than zero',
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
-            document.getElementById('quantity-error').textContent = 'Quantity cannot be less than zero';
-            return;
-        }
+        
 
         // Validate regular price
         if (isNaN(regularPrice) || regularPrice <= 0) {
@@ -414,6 +417,41 @@ if (!description) {
             document.getElementById('salePrice-error').textContent = 'Sale price cannot be higher than regular price';
             return;
         }
+
+        // Validate size-wise quantities
+        const sizeFields = ['sizeS', 'sizeM', 'sizeL'];
+        let totalQuantity = 0;
+        let sizeError = '';
+
+        sizeFields.forEach(sizeField => {
+            const input = document.getElementById(sizeField);
+            const value = parseInt(input?.value);
+
+            if (!input || isNaN(value) || value < 0) {
+                isValid = false;
+                sizeError = 'Please enter valid quantities (0 or more) for all sizes.';
+            } else {
+                totalQuantity += value;
+            }
+        });
+
+        if (totalQuantity === 0) {
+            isValid = false;
+            sizeError = 'Please enter quantity for at least one size.';
+        }
+
+        document.getElementById('sizes-error').textContent = sizeError;
+        if (sizeError) {
+            Swal.fire({
+                title: 'Invalid Sizes!',
+                text: sizeError,
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+
 
         // Check if all 4 images are processed (either uploaded or cropped)
         const allImagesProcessed = croppedImagesStatus.every(status => status === true);
@@ -476,14 +514,20 @@ if (!description) {
     });
 
     // Add real-time validation for quantity, regular price, and sale price
-    document.getElementById('quantity').addEventListener('input', function() {
-        const quantity = parseInt(this.value);
-        if (isNaN(quantity) || quantity < 0) {
-            document.getElementById('quantity-error').textContent = 'Quantity cannot be less than zero';
+   ['sizeS', 'sizeM', 'sizeL'].forEach(id => {
+    const input = document.getElementById(id);
+    input.addEventListener('input', function () {
+        const value = parseInt(this.value);
+        const errorEl = document.getElementById('sizes-error');
+        if (isNaN(value) || value < 0) {
+            errorEl.textContent = 'Quantities must be 0 or more for each size.';
         } else {
-            document.getElementById('quantity-error').textContent = '';
+            errorEl.textContent = '';
         }
     });
+    });
+
+
 
     document.getElementById('regularPrice').addEventListener('input', function() {
         const regularPrice = parseFloat(this.value);

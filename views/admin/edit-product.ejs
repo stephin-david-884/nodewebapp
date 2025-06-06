@@ -95,11 +95,28 @@
                     </div>
                     <div class="col-lg-3">
                         <div class="mb-4">
-                            <label class="form-label">Quantity</label>
-                            <input name="quantity" type="number" value="<%= product.quantity %>" class="form-control" >
-                            <div id="quantity-error" class="error-message"></div>
+                            <label class="form-label">Size S Quantity</label>
+                            <input name="sizeS" type="number" value="<%= product.sizes?.S || 0 %>" class="form-control">
+                            <div id="sizeS-error" class="error-message"></div>
                         </div>
                     </div>
+
+                    <div class="col-lg-3">
+                        <div class="mb-4">
+                            <label class="form-label">Size M Quantity</label>
+                            <input name="sizeM" type="number" value="<%= product.sizes?.M || 0 %>" class="form-control">
+                            <div id="sizeM-error" class="error-message"></div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3">
+                        <div class="mb-4">
+                            <label class="form-label">Size L Quantity</label>
+                            <input name="sizeL" type="number" value="<%= product.sizes?.L || 0 %>" class="form-control">
+                            <div id="sizeL-error" class="error-message"></div>
+                        </div>
+                    </div>
+
                     <div class="col-lg-3">
                         <div class="mb-4">
                             <label class="form-label">Color</label>
@@ -230,11 +247,15 @@
         e.preventDefault();
         
         let isValid = true;
-        const requiredFields = ['productName', 'brand', 'regularPrice', 'salePrice', 'quantity', 'color', 'category'];
+        const requiredFields = ['productName', 'brand', 'regularPrice', 'salePrice', 'color', 'category'];
 
         // Clear previous error messages
         requiredFields.forEach(field => {
             document.getElementById(`${field}-error`).textContent = '';
+        });
+
+         ['sizeS', 'sizeM', 'sizeL'].forEach(size => {
+        document.getElementById(`${size}-error`).textContent = '';
         });
 
         // Validate required fields
@@ -247,22 +268,37 @@
             }
         });
 
-        const quantity = parseInt(document.querySelector('input[name="quantity"]').value);
+        // Validate size-wise quantity
+        const sizeS = parseInt(document.getElementsByName('sizeS')[0].value) || 0;
+        const sizeM = parseInt(document.getElementsByName('sizeM')[0].value) || 0;
+        const sizeL = parseInt(document.getElementsByName('sizeL')[0].value) || 0;
+
+        if (sizeS < 0) {
+            isValid = false;
+            document.getElementById('sizeS-error').textContent = 'Quantity cannot be negative.';
+        }
+        if (sizeM < 0) {
+            isValid = false;
+            document.getElementById('sizeM-error').textContent = 'Quantity cannot be negative.';
+        }
+        if (sizeL < 0) {
+            isValid = false;
+            document.getElementById('sizeL-error').textContent = 'Quantity cannot be negative.';
+        }
+
+        if (sizeS === 0 && sizeM === 0 && sizeL === 0) {
+            isValid = false;
+            document.getElementById('sizeS-error').textContent = 'At least one size must have quantity.';
+        }
+
+
+        //Validate Price Logic
         const regularPrice = parseFloat(document.querySelector('input[name="regularPrice"]').value);
         const salePrice = parseFloat(document.querySelector('input[name="salePrice"]').value);
 
-        if (isNaN(quantity) || quantity < 0) {
-            isValid = false;
-            Swal.fire({
-                title: 'Invalid Quantity!',
-                text: 'Quantity cannot be less than zero',
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
-            return;
-        }
+        
 
-        if (regularPrice <= 0) {
+        if (isNaN(regularPrice) ||regularPrice <= 0) {
             isValid = false;
             Swal.fire({
                 title: 'Invalid Regular Price!',
@@ -273,7 +309,7 @@
             return;
         }
 
-        if (isNaN(regularPrice) || salePrice <= 0) {
+        if (isNaN(salePrice) || salePrice <= 0) {
             isValid = false;
             Swal.fire({
                 title: 'Invalid Sale Price!',
@@ -323,7 +359,7 @@ if (imageUploadedCount < 4) {
     return;
 }
 
-
+        // Submit if valid
         if (isValid) {
             for (let i = 0; i < 4; i++) {
                 if (croppers[i]) {
@@ -373,14 +409,17 @@ if (imageUploadedCount < 4) {
     });
 
     // Real-time validations
-    document.querySelector('input[name="quantity"]').addEventListener('input', function() {
-        const quantity = parseInt(this.value);
-        if (quantity < 0) {
-            this.setCustomValidity('Quantity cannot be less than zero');
-            this.reportValidity();
-        } else {
-            this.setCustomValidity('');
-        }
+    ['sizeS', 'sizeM', 'sizeL'].forEach(size => {
+        const input = document.querySelector(`input[name="${size}"]`);
+        input.addEventListener('input', function () {
+            const quantity = parseInt(this.value);
+            if (quantity < 0) {
+                this.setCustomValidity('Quantity cannot be less than zero');
+                this.reportValidity();
+            } else {
+                this.setCustomValidity('');
+            }
+        });
     });
 
     document.querySelector('input[name="regularPrice"]').addEventListener('input', function() {

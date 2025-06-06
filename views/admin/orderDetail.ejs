@@ -167,21 +167,21 @@
                 </p>
 
                 <form action="/admin/order/<%= order.orderId %>/status" method="POST">
-  <label for="status">Status:</label>
-  <select name="status" id="status" onchange="this.form.submit()" class="form-select form-select-sm mt-1">
-    <% ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].forEach((option) => { %>
-      <% 
-        const currentIndex = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].indexOf(order.status);
-        const optionIndex = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].indexOf(option);
-      %>
-      <% if (optionIndex >= currentIndex) { %>
-        <option value="<%= option %>" <%= order.status === option ? 'selected' : '' %>>
-          <%= option %>
-        </option>
-      <% } %>
-    <% }) %>
-  </select>
-</form>
+                  <label for="status">Status:</label>
+                  <select name="status" id="status" onchange="this.form.submit()" class="form-select form-select-sm mt-1">
+                    <% ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].forEach((option) => { %>
+                      <% 
+                        const currentIndex = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].indexOf(order.status);
+                        const optionIndex = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].indexOf(option);
+                      %>
+                      <% if (optionIndex >= currentIndex) { %>
+                        <option value="<%= option %>" <%= order.status === option ? 'selected' : '' %>>
+                          <%= option %>
+                        </option>
+                      <% } %>
+                    <% }) %>
+                  </select>
+                </form>
 
               </div>
             </article>
@@ -226,7 +226,7 @@
                     <th width="10%">Unit Price</th>
                     <th width="10%">Quantity</th>
                     <th width="10%">Total</th>
-                    
+                    <th width="10%">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -243,16 +243,23 @@
                       <td class="text-center">₹<%= item.price %></td>
                       <td class="text-center"><%= item.quantity %></td>
                       <td class="text-center">₹<%= item.price * item.quantity %></td>
-                      
+                      <td class="text-center">
+                        <% if (item.productStatus === 'Cancelled') { %>
+                          <span class="badge " ><%= item.productStatus %></span>
+                        <% } else { %>
+                          <span class="badge bg-success"><%= item.productStatus %></span>
+                        <% } %>
+                      </td>
+
                     </tr>
                   <% }) %>
                 </tbody>
               </table>
               <div class="text-end me-4">
   <p><strong>Total Price:</strong> ₹<%= order.totalPrice %></p>
-  <% if (order.couponApplied) { %>
-    <p><strong>Discount:</strong> ₹<%= order.discount %></p>
-  <% } %>
+  
+    <p><strong>Coupon Discount:</strong> ₹<%= order.discount %></p>
+  
   <p><strong>Final Amount:</strong> ₹<%= order.finalAmount %></p>
 </div>
 

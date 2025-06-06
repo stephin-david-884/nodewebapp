@@ -60,7 +60,7 @@
                                                 </td>
                                                 <td class="product-des product-name">
                                                 <h5 class="product-name">
-                                                    <a href="cart"><%= data[i].productDetails[0].productName %></a>
+                                                    <a href="#"><%= data[i].productDetails[0].productName %></a>
                                                 </h5>
                                                 <p class="font-xs">
                                                     
@@ -69,18 +69,26 @@
                                                 </p>
 
                                                 <div class="size-selector mt-2">
-                                                    <% let sizesObject = data[i].productDetails[0].sizes || {}; %>
-                                                    <% let sizeKeys = Object.keys(sizesObject); %>
+                                                    <% 
+                                                        var sizesObject = data[i].productDetails[0].sizes || {}; 
+                                                        var sizeKeys = Object.keys(sizesObject); 
+                                                    %>
                                                     <span class="d-block mb-1 fw-bold">Change Size:</span>
-                                                    <% sizeKeys.forEach(size => { %>
+                                                    <% sizeKeys.forEach(size => { 
+                                                        var availableQty = sizesObject[size];
+                                                        var isActive = size === data[i].size;
+                                                        var isOutOfStock = availableQty <= 0;
+                                                    %>
                                                         <button 
-                                                        class="btn btn-sm me-2 size-btn <%= size === data[i].size ? 'active' : '' %>" 
-                                                        onclick="updateSize('<%= data[i].productDetails[0]._id %>', '<%= size %>', '<%= data[i].size %>')"
+                                                            class="btn btn-sm me-2 size-btn <%= isActive ? 'active' : '' %>" 
+                                                            onclick="<%= isOutOfStock ? '' : `updateSize('${data[i].productDetails[0]._id}', '${size}', '${data[i].size}')` %>"
+                                                            <%= isOutOfStock ? 'disabled style="opacity: 0.6; cursor: not-allowed;"' : '' %>
                                                         >
-                                                        <%= size %>
+                                                            <%= size %> <%= isOutOfStock ? '' : '' %>
                                                         </button>
                                                     <% }) %>
-                                                    </div>
+                                                </div>
+
 
 
                                                 </td>
