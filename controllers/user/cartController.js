@@ -35,12 +35,15 @@ const getCartPage = async (req, res) => {
       quantity += i.quantity;
     }
     let grandTotal = 0;
+    
     for (let i = 0; i < data.length; i++) {
-      if (products[i]) {
-        grandTotal += data[i].productDetails[0].salePrice * data[i].quantity;
+      const product = data[i].productDetails[0];
+      if (product) {
+        grandTotal += product.salePrice * data[i].quantity;
       }
-      req.session.grandTotal = grandTotal;
     }
+    req.session.grandTotal = grandTotal;
+
     res.render("cart", {
       user,
       quantity,

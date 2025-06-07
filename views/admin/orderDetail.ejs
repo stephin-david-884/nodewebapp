@@ -203,11 +203,13 @@
                 </p>
                 <a href="/admin/invoice/<%= order._id %>" ><button class="btn btn-info" style="color: #f7f7f7;">Download Invoice</button></a>
 
-                <% if (order.status === 'Return Request') { %>
-                <button type="button" class="btn btn-dark btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#returnRequestModal">
-                  Handle Return Request
-                </button>
-              <% } %>
+                <% const hasReturnRequest = order.product.some(p => p.productStatus === 'Return Requested'); %>
+                <% if (hasReturnRequest) { %>
+                  <button type="button" class="btn btn-dark btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#returnRequestModal">
+                    Handle Return Request
+                  </button>
+                <% } %>
+
 
               </div>
             </article>
@@ -269,28 +271,39 @@
       </div>
       <!-- Return Request Modal -->
 <div class="modal fade" id="returnRequestModal" tabindex="-1" aria-labelledby="returnRequestModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content p-3">
       <div class="modal-header">
-        <h5 class="modal-title" id="returnRequestModalLabel">Return Request Details</h5>
+        <h5 class="modal-title">Return Requests</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <p><strong>Reason for Return:</strong></p>
-        <p><%= order.returnReason || "No reason provided." %></p>
+        <% order.product.forEach((item, index) => { %>
+          <% if (item.productStatus === 'Return Requested') { %>
+            <div class="border p-3 mb-3 rounded">
+              <p><strong>Product:</strong> <%= item.name %></p>
+              <p><strong>Size:</strong> <%= item.size %></p>
+              <p><strong>Reason:</strong> <%= item.returnReason || "No reason provided" %></p>
+              <div class="d-flex justify-content-end gap-2">
+                <form action="/admin/approveReturn/<%= order.orderId %>/<%= index %>" method="POST">
+                  <input type="hidden" name="productIndex" value="<%= order.product.findIndex(p => p.productStatus === 'Return Requested') %>">
+                  <button type="submit" class="btn btn-success">Approve</button>
+                </form>
 
-        <div class="d-flex justify-content-between mt-4">
-          <form action="/admin/approveReturn/<%= order.orderId %>" method="POST">
-            <button type="submit" class="btn btn-success">Approve</button>
-          </form>
-          <form action="/admin/rejectReturn/<%= order.orderId %>" method="POST">
-            <button type="submit" class="btn btn-danger">Reject</button>
-          </form>
-        </div>
+                <form action="/admin/rejectReturn/<%= order.orderId %>/<%= index %>" method="POST">
+                  <input type="hidden" name="productIndex" value="<%= order.product.findIndex(p => p.productStatus === 'Return Requested') %>">
+                  <button type="submit" class="btn btn-danger">Reject</button>
+                </form>
+
+              </div>
+            </div>
+          <% } %>
+        <% }) %>
       </div>
     </div>
   </div>
 </div>
+
 
     </section>
   </main>

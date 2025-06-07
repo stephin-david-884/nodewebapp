@@ -34,6 +34,10 @@ const orderSchema = new Schema({
             type: String,
             default: "Confirmed",
         },
+        returnReason: {
+        type: String,
+        default: ''
+        },
         },
     ],
     totalPrice:{

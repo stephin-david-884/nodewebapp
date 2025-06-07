@@ -92,8 +92,8 @@ router.get("/orderList", adminAuth, orderController.listOrders)
 router.get("/order/:orderId", adminAuth, orderController.getOrderDetails)
 router.get('/invoice/:orderId', adminAuth, orderController.getInvoice);
 router.post('/order/:orderId/status', adminAuth, orderController.updateOrderStatus);
-router.post('/approveReturn/:orderId', adminAuth, orderController.approveReturn);
-router.post('/rejectReturn/:orderId', adminAuth, orderController.rejectReturn);
+router.post('/approveReturn/:orderId/:productIndex', adminAuth, orderController.approveReturn);
+router.post('/rejectReturn/:orderId/:productIndex', adminAuth, orderController.rejectReturn);
 
 //Dashboard Management
 // Route

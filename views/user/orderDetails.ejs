@@ -110,8 +110,8 @@
                                                 <% if (orders.product[i].productStatus === "Cancel") { %>
                                                     <i>Cancelled</i>
                                                 <% } else { %>
-                                                    <select onchange="handleDropdownChange(this, '<%= orders._id %>', <%= i %>)">
-                                                    <option value="" disabled selected><%= orders.status %></option>
+                                                    <select onchange="handleDropdownChange(this, '<%= orders._id %>', <%= i %>, '<%= orders.product[i]._id %>', '<%= orders.product[i].size %>')">
+                                                    <option value="" disabled selected><%= orders.product[i].productStatus %></option>
                                                     <% if (orders.status === "Confirmed") { %>
                                                         <option value="cancel">Cancel Order</option>
                                                     <% } else if (orders.status === "Delivered") { %>
@@ -137,7 +137,7 @@
         <!-- Return Reason Modal -->
 <div class="modal fade" id="returnReasonModal" tabindex="-1" aria-labelledby="returnReasonModalLabel" aria-hidden="true">
   <div class="modal-dialog">
-    <form id="returnReasonForm" method="POST">
+    <form id="returnReasonForm">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Return Reason</h5>
@@ -154,6 +154,7 @@
   </div>
 </div>
 
+
     </section>
 </main>
 
@@ -167,19 +168,21 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 
 <script>
-function handleDropdownChange(selectElement, orderId, productIndex) {
+function handleDropdownChange(selectElement, orderId, productIndex, productId, size) {
   const selectedValue = selectElement.value;
 
   if (selectedValue === "cancel") {
     confirmCancelOrder(orderId, productIndex);
   } else if (selectedValue === "returnrequest") {
     const form = document.getElementById('returnReasonForm');
-    form.action = `/order/${orderId}/return`; 
+    form.dataset.orderId = orderId;
+    form.dataset.productId = productId;
+    form.dataset.size = size;
+    form.dataset.productIndex = productIndex;
     const modal = new bootstrap.Modal(document.getElementById('returnReasonModal'));
     modal.show();
   }
 }
-
 
 function confirmCancelOrder(orderId, productIndex) {
   Swal.fire({
@@ -214,25 +217,44 @@ function cancelOrderItem(orderId, productIndex) {
     }
   });
 }
-
-
-function returnRequestOrder(orderId) {
-    $.ajax({
-        url: '/returnrequestOrder',
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({ orderId: orderId }),
-        success: (response) => {
-            if (response.result.modifiedCount === 1) {
-                window.location.reload();
-            }
-        },
-        error: (error) => {
-            alert(error);
-        }
-    });
-}
 </script>
+<script>
+document.getElementById('returnReasonForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  
+  const reason = this.reason.value;
+  const orderId = this.dataset.orderId;
+  const productId = this.dataset.productId;
+  const size = this.dataset.size;
+  const productIndex = this.dataset.productIndex;
+
+  $.ajax({
+    url: `/order/${orderId}/return`,
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify({
+      productId,
+      size,
+      reason,
+      productIndex,
+    }),
+    success: (response) => {
+      if (response.success) {
+        Swal.fire('Return Requested', 'Your return has been submitted.', 'success').then(() => {
+          window.location.reload();
+        });
+      } else {
+        Swal.fire('Error', 'Something went wrong.', 'error');
+      }
+    },
+    error: (error) => {
+      Swal.fire('Error', 'Something went wrong.', 'error');
+      console.error(error);
+    }
+  });
+});
+</script>
+
 
 
 

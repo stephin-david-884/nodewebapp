@@ -248,7 +248,17 @@ const updateOrderStatus = async (req, res) => {
           await user.save();
         }
       }
-    }  
+    }
+    
+    if (newStatus === 'Delivered') {
+      for (let item of order.product) {
+        // Only update if it's not Cancelled or already Returned
+        if (item.productStatus !== 'Cancel' && item.productStatus !== 'Returned') {
+          item.productStatus = 'Delivered';
+        }
+      }
+    }
+
 
     // Update the order status
     order.status = newStatus;
@@ -264,88 +274,97 @@ const updateOrderStatus = async (req, res) => {
 
 const approveReturn = async (req, res) => {
   try {
-    const orderId = req.params.orderId;
+    const { orderId } = req.params;
+    const { productIndex } = req.body;
 
-    // Fetch the order
-    const order = await Order.findOne({orderId:orderId}); 
-    
+    const order = await Order.findOne({ orderId });
     if (!order) {
       return res.status(404).send('Order not found');
     }
 
-    // Validate return status
-    if (order.status !== 'Return Request') {
-      return res.status(400).send('Invalid return request');
+    const productItem = order.product[productIndex];
+    if (!productItem || productItem.productStatus !== 'Return Requested') {
+      return res.status(400).send('Invalid product or no return request found');
     }
 
-    // Get refund amount (ensure it's a number)
-    const refundAmount = Number(order.finalAmount);
-    if (isNaN(refundAmount)) {
-      return res.status(400).send('Invalid refund amount');
-    }
+    // Update stock in Product model
+    await Product.findByIdAndUpdate(productItem._id, {
+      $inc: {
+        [`sizes.${productItem.size}`]: productItem.quantity,
+      },
+    });
 
-    // Fetch user
-    const user = await User.findById(order.userId);
-    if (!user) {
-      return res.status(404).send('User not found');
-    }
-
-    // Refund to wallet
-    user.wallet = Number(user.wallet || 0) + refundAmount;
-    user.history.push({
-    amount: refundAmount,
-    status: "credit",
-    date: new Date()
-  });
-    await user.save();
-
-       // 🔁 Increment product quantities back
-    for (const item of order.product) {
-      const product = await Product.findById(item._id);
-      if (product) {
-        product.quantity += item.quantity;
-        await product.save();
+    // Refund to wallet if payment was via wallet or razorpay
+    if (order.payment === 'wallet' || order.payment === 'razorpay') {
+      const user = await User.findById(order.userId);
+      if (user) {
+        const refundAmount = productItem.price * productItem.quantity;
+        user.wallet = (user.wallet || 0) + refundAmount;
+        user.history.push({
+          amount: refundAmount,
+          status: "credit",
+          date: new Date()
+        });
+        await user.save();
       }
     }
 
-    // Update order status
-    order.status = 'Returned';
+    // Update product status
+    order.product[productIndex].productStatus = 'Returned';
+
+    // If all products are returned or cancelled, update order status
+    const allReturnedOrCancelled = order.product.every(p =>
+      p.productStatus === 'Returned' || p.productStatus === 'Cancelled'
+    );
+    if (allReturnedOrCancelled) {
+      order.status = 'Returned';
+    }
+
     await order.save();
 
-   res.redirect(`/admin/order/${orderId}`);
-
-  } catch (error) {
-    console.error('Error in approveReturn:', error);
-    res.redirect("/pagerror")
+    res.redirect(`/admin/order/${orderId}`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Internal server error');
   }
 };
 
+
 const rejectReturn = async (req, res) => {
   try {
-    const orderId = req.params.orderId;
+    const { orderId, productIndex } = req.params;
 
-    // Find the order by orderId (not _id)
-    const order = await Order.findOne({ orderId: orderId });
-
+    const order = await Order.findOne({ orderId });
     if (!order) {
       return res.status(404).send('Order not found');
     }
 
-    // Only allow rejection if it's in "Return Request" status
-    if (order.status !== 'Return Request') {
-      return res.status(400).send('Return request cannot be rejected');
+    const productItem = order.product[productIndex];
+    if (!productItem || productItem.productStatus !== 'Return Requested') {
+      return res.status(400).send('Invalid product or no return request found');
     }
 
-    // Update order status
-    order.status = 'Rejected';
+    // ✅ Explicitly mark as 'Return Rejected'
+    order.product[productIndex].productStatus = 'Return Rejected';
+
+    // ✅ If all products are either Delivered, Cancelled, or Return Rejected, mark order as Delivered
+    const allHandled = order.product.every(p =>
+      ['Delivered', 'Cancelled', 'Return Rejected'].includes(p.productStatus)
+    );
+    if (allHandled) {
+      order.status = 'Delivered';
+    }
+
     await order.save();
 
     res.redirect(`/admin/order/${orderId}`);
-  } catch (error) {
-    console.error('Error in rejectReturn:', error);
-    res.status(500).send('Something went wrong');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Internal server error');
   }
 };
+
+
 
 
 module.exports = {listOrders, getOrderDetails, getInvoice, updateOrderStatus, approveReturn, rejectReturn}
