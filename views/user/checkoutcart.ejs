@@ -428,6 +428,12 @@
                                 }
                             }
                             var rzp1 = new Razorpay(options);
+                            rzp1.on('payment.failed', function (response) {
+                                verifyPayment({
+                                    id: response.error.metadata.order_id,
+                                    receipt: `order_receipt_${orderId}`
+                                }, response.error, orderId);
+                            });
                             rzp1.open();
 
                         } else {
@@ -443,48 +449,55 @@
             }
         }
 
-        function verifyPayment(order, payment,orderId) {
+        function verifyPayment(order, payment, orderId) {
             $.ajax({
                 url: '/verifyPayment',
                 method: 'post',
                 data: {
                     order,
                     payment
-                }, success: (response) => {
+                },
+                success: (response) => {
                     if (response.status) {
                         $.ajax({
-                            url:'/paymentConfirm',
-                            method:'post',
-                            data :{
-                                status:"Pending",
+                            url: '/paymentConfirm',
+                            method: 'post',
+                            data: {
+                                status: "Pending",
                                 orderId
                             },
-                            success:(response)=>{
-                            }
-                        })
+                        });
+
                         Swal.fire({
                             title: "Order success",
-                            text: "order placed successfully",
+                            text: "Order placed successfully",
                             icon: "success",
                             showCancelButton: true,
-                            confirmButtonText: "view orders",
-                            cancelButtonText: "continue shopping",
+                            confirmButtonText: "View orders",
+                            cancelButtonText: "Continue shopping",
                             reverseButtons: true
                         }).then(function (result) {
                             if (result.value) {
-                                console.log("I am success");
-                                var orderDetailsUrl = `/orderDetails?id=${orderId}`;
-            location.href = orderDetailsUrl;
-                            } else if (result.dismiss === "cancel") {
-                                console.log("Nopppp");
-                                location.href = '/'
+                                location.href = `/orderDetails?id=${orderId}`;
+                            } else {
+                                location.href = '/';
                             }
                         });
-                    }
 
+                    } else {
+                        Swal.fire({
+                            title: "Payment Failed",
+                            text: "Transaction failed. Please try again.",
+                            icon: "error",
+                            confirmButtonText: "Retry"
+                        }).then(() => {
+                            location.href = `/orderDetails?id=${orderId}`;  // You can redirect to a failed payment page
+                        });
+                    }
                 }
-            })
+            });
         }
+
         
         
     </script>

@@ -552,16 +552,39 @@ const verifyPayment = async (req, res) => {
   try {
     const { order, payment } = req.body;
 
-    const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET); // Razorpay secret key
+
+    const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
     hmac.update(order.id + "|" + payment.razorpay_payment_id);
     const generatedSignature = hmac.digest("hex");
 
+    const orderId = order.receipt.split("_")[2]; // Extract your actual DB _id
+
+     
+
     if (generatedSignature === payment.razorpay_signature) {
-      // Payment is verified
-      await Order.findByIdAndUpdate(order.receipt.split("_")[2], { status: "Confirmed" });
+
+      
+      // ✅ Payment successful
+      const paidOrder = await Order.findById(orderId);
+      if (paidOrder) {
+        paidOrder.status = "Confirmed";
+        paidOrder.product.forEach(item => {
+          item.productStatus = "Confirmed";
+        });
+        await paidOrder.save();
+      }
       res.json({ status: true });
     } else {
-      await Order.findByIdAndUpdate(order.receipt.split("_")[2], { status: "Failed" });
+
+      // ❌ Payment failed
+      const failedOrder = await Order.findById(orderId);
+      if (failedOrder) {
+        failedOrder.status = "Failed";
+        failedOrder.product.forEach(item => {
+          item.productStatus = "Failed";
+        });
+        await failedOrder.save();
+      }
       res.json({ status: false });
     }
   } catch (err) {
@@ -569,6 +592,7 @@ const verifyPayment = async (req, res) => {
     res.json({ status: false });
   }
 };
+
 
 const paymentConfirm = async (req, res) => {
   try {
@@ -672,8 +696,30 @@ const returnRequest = async (req, res) => {
   }
 };
 
+const retryPayment = async (req, res) => {
+  try {
+    const orderId = req.query.id;
+
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ error: "Order not found" });
+
+    if (order.status !== "Failed") {
+      return res.status(400).json({ error: "Order is not failed" });
+    }
+
+    const razorPayOrder = await generateOrderRazorpay(orderId, order.finalAmount);
+
+    res.json({
+      razorPayOrder,
+      key_id: process.env.RAZORPAY_KEY_ID
+    });
+  } catch (error) {
+    console.error("Retry payment error:", error);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+};
 
 
 
 
- module.exports = {getCheckoutPage, deleteProduct, orderPlaced, getOrderDetailsPage, viewOrderDetails, cancelOrder,getInvoice, verifyPayment, paymentConfirm, applyCoupon, returnRequest}
+ module.exports = {getCheckoutPage, deleteProduct, orderPlaced, getOrderDetailsPage, viewOrderDetails, cancelOrder,getInvoice, verifyPayment, paymentConfirm, applyCoupon, returnRequest, retryPayment}
