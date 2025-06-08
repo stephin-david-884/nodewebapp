@@ -104,9 +104,6 @@ const getDashboardSummary = async (req, res) => {
   res.json({ totalAmount, totalDiscount, totalOrders, sales: dailySales, labels });
 };
 
-
-
-
 const downloadSalesReport = async (req, res) => {
   try {
     const { format, range, startDate, endDate } = req.query;
@@ -131,7 +128,17 @@ const downloadSalesReport = async (req, res) => {
     const orders = await Order.find({
       createdOn: { $gte: start, $lte: end },
       status: { $ne: 'Cancelled' }
-    });
+    })
+    .populate('userId')
+    .populate('product._id'); // <-- This fixes the missing regularPrice issue
+
+    const summary = {
+      totalOrders: orders.length,
+      totalPrice: 0,
+      discount: 0,
+      productDiscount: 0,
+      finalAmount: 0,
+    };
 
     if (format === 'pdf') {
       const doc = new PDFDocument({ margin: 30, size: 'A4' });
@@ -142,40 +149,77 @@ const downloadSalesReport = async (req, res) => {
       doc.fontSize(20).text('Sales Report', { align: 'center' });
       doc.moveDown();
 
-      // Table Header
       const tableTop = 100;
-      const itemX = 50;
-      const headers = ['#', 'Order ID', 'Date', 'Total', 'Discount', 'Final', 'Payment'];
-      const colWidths = [30, 90, 100, 60, 60, 60, 80];
+      const itemX = 30;
+      const headers = ['#', 'Order ID', 'User', 'Date', 'Total', 'Coupon Disc', 'Prod Disc', 'Final', 'Payment'];
+      const colWidths = [20, 80, 80, 70, 60, 60, 60, 60, 70];
 
+      let rowY = tableTop;
+
+      // Headers
       headers.forEach((header, i) => {
-        doc.font('Helvetica-Bold').fontSize(10).text(header, itemX + colWidths.slice(0, i).reduce((a, b) => a + b, 0), tableTop);
+        const x = itemX + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
+        doc.rect(x, rowY, colWidths[i], 20).stroke();
+        doc.font('Helvetica-Bold').fontSize(9).text(header, x + 2, rowY + 5);
       });
 
-      // Table Rows
-      let rowY = tableTop + 20;
+      rowY += 20;
+
       orders.forEach((order, index) => {
+        const totalRegularPrice = order.product.reduce((sum, item) =>
+          sum + ((item._id?.regularPrice || 0) * item.quantity), 0);
+
+        const productLevelDiscount = order.product.reduce((sum, item) =>
+          sum + (((item._id?.regularPrice || 0) - item.price) * item.quantity), 0);
+
+        summary.totalPrice += totalRegularPrice;
+        summary.discount += order.discount;
+        summary.productDiscount += productLevelDiscount;
+        summary.finalAmount += order.finalAmount;
+
         const row = [
           index + 1,
           order._id.toString().slice(-8),
+          order.userId?.name || 'N/A',
           new Date(order.createdOn).toLocaleDateString(),
-          `Rs.${order.totalPrice}`,
+          `Rs.${totalRegularPrice}`,
           `Rs.${order.discount}`,
+          `Rs.${productLevelDiscount}`,
           `Rs.${order.finalAmount}`,
           order.payment
         ];
 
         row.forEach((text, i) => {
-          doc.font('Helvetica').fontSize(9).text(text, itemX + colWidths.slice(0, i).reduce((a, b) => a + b, 0), rowY);
+          const x = itemX + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
+          doc.rect(x, rowY, colWidths[i], 20).stroke();
+          doc.font('Helvetica').fontSize(8).text(text, x + 2, rowY + 5);
         });
 
         rowY += 20;
-
-        // Add new page if needed
         if (rowY > 750) {
           doc.addPage();
           rowY = 50;
         }
+      });
+
+      rowY += 20;
+      doc.fontSize(12).text('Order Summary', itemX, rowY);
+      rowY += 15;
+
+      const summaryData = [
+        ['Total Orders', summary.totalOrders],
+        ['Total Price', `Rs.${summary.totalPrice}`],
+        ['Coupon Discounts', `Rs.${summary.discount}`],
+        ['Product Discounts', `Rs.${summary.productDiscount}`],
+        ['Final Amount', `Rs.${summary.finalAmount}`]
+      ];
+
+      summaryData.forEach(([label, value]) => {
+        doc.rect(itemX, rowY, 200, 20).stroke();
+        doc.rect(itemX + 200, rowY, 200, 20).stroke();
+        doc.fontSize(9).text(label, itemX + 5, rowY + 5);
+        doc.text(value, itemX + 205, rowY + 5);
+        rowY += 20;
       });
 
       doc.end();
@@ -185,22 +229,70 @@ const downloadSalesReport = async (req, res) => {
       const worksheet = workbook.addWorksheet('Sales Report');
 
       worksheet.columns = [
-        { header: 'Order ID', key: 'id' },
-        { header: 'Date', key: 'date' },
-        { header: 'Total Price', key: 'total' },
-        { header: 'Discount', key: 'discount' },
-        { header: 'Final Amount', key: 'final' },
-        { header: 'Payment Method', key: 'payment' }
+        { header: '#', key: 'index', width: 5 },
+        { header: 'Order ID', key: 'id', width: 20 },
+        { header: 'User', key: 'user', width: 20 },
+        { header: 'Date', key: 'date', width: 20 },
+        { header: 'Total Price', key: 'total', width: 15 },
+        { header: 'Coupon Discount', key: 'couponDiscount', width: 18 },
+        { header: 'Product Discount', key: 'productDiscount', width: 18 },
+        { header: 'Final Amount', key: 'final', width: 15 },
+        { header: 'Payment', key: 'payment', width: 15 },
       ];
 
-      orders.forEach(order => {
-        worksheet.addRow({
+      orders.forEach((order, index) => {
+        const totalRegularPrice = order.product.reduce((sum, item) =>
+          sum + ((item._id?.regularPrice || 0) * item.quantity), 0);
+
+        const productLevelDiscount = order.product.reduce((sum, item) =>
+          sum + (((item._id?.regularPrice || 0) - item.price) * item.quantity), 0);
+
+        summary.totalPrice += totalRegularPrice;
+        summary.discount += order.discount;
+        summary.productDiscount += productLevelDiscount;
+        summary.finalAmount += order.finalAmount;
+
+        const row = worksheet.addRow({
+          index: index + 1,
           id: order._id.toString(),
+          user: order.userId?.name || 'N/A',
           date: new Date(order.createdOn).toLocaleString(),
-          total: order.totalPrice,
-          discount: order.discount,
+          total: totalRegularPrice,
+          couponDiscount: order.discount,
+          productDiscount: productLevelDiscount,
           final: order.finalAmount,
-          payment: order.payment
+          payment: order.payment,
+        });
+
+        row.eachCell(cell => {
+          cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          };
+        });
+      });
+
+      worksheet.addRow([]);
+      worksheet.addRow(['Order Summary']);
+      const summaryRows = [
+        ['Total Orders', summary.totalOrders],
+        ['Total Price', summary.totalPrice],
+        ['Coupon Discounts', summary.discount],
+        ['Product Discounts', summary.productDiscount],
+        ['Final Amount', summary.finalAmount],
+      ];
+
+      summaryRows.forEach(data => {
+        const row = worksheet.addRow(data);
+        row.eachCell(cell => {
+          cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          };
         });
       });
 
@@ -208,14 +300,20 @@ const downloadSalesReport = async (req, res) => {
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       await workbook.xlsx.write(res);
       res.end();
+
     } else {
       return res.status(400).send('Invalid format');
     }
+
   } catch (err) {
     console.error('Download Error:', err);
     res.status(500).send('Internal Server Error');
   }
 };
+
+
+
+
 
 
 
