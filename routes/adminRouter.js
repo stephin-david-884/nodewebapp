@@ -95,10 +95,10 @@ router.post('/order/:orderId/status', adminAuth, orderController.updateOrderStat
 router.post('/approveReturn/:orderId/:productIndex', adminAuth, orderController.approveReturn);
 router.post('/rejectReturn/:orderId/:productIndex', adminAuth, orderController.rejectReturn);
 
-//Dashboard Management
-// Route
+//Dashboard Management and Sales Report
 router.get('/sales-summary',adminAuth, adminController.getDashboardSummary);
 router.get('/download-sales-report',adminAuth, adminController.downloadSalesReport);
-
+router.post('/filter-sales-table',adminAuth, adminController.getFilteredSalesReportTable);
+router.get('/sales-report', adminAuth, adminController.loadSalesReport)
 
 module.exports = router

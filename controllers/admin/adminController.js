@@ -81,7 +81,7 @@ const getDashboardSummary = async (req, res) => {
   const orders = await Order.find({
     createdOn: { $gte: from },
     status: { $ne: "Cancelled" }
-  });
+  }).populate('userId'); // ✅ Correct field for population
 
   const dailySales = Array(7).fill(0);
   const labels = Array(7).fill().map((_, i) => {
@@ -101,8 +101,28 @@ const getDashboardSummary = async (req, res) => {
   const totalDiscount = orders.reduce((sum, o) => sum + o.discount, 0);
   const totalOrders = orders.length;
 
-  res.json({ totalAmount, totalDiscount, totalOrders, sales: dailySales, labels });
+  // ✅ Correct user field reference
+  const tableOrders = orders.map(order => ({
+    id: order._id.toString(),
+    user: order.userId?.name || 'Guest',
+    date: order.createdOn,
+    total: order.totalPrice,
+    couponDiscount: order.couponDiscount || 0,
+    productDiscount: order.discount || 0,
+    final: order.finalAmount,
+    payment: order.payment?.method || 'Unknown'
+  }));
+
+  res.json({
+    totalAmount,
+    totalDiscount,
+    totalOrders,
+    sales: dailySales,
+    labels,
+    orders: tableOrders
+  });
 };
+
 
 const downloadSalesReport = async (req, res) => {
   try {
@@ -311,10 +331,101 @@ const downloadSalesReport = async (req, res) => {
   }
 };
 
+const getFilteredSalesReportTable = async (req, res) => {
+  try {
+    const { range, startDate, endDate } = req.body;
+
+    let start, end;
+    const now = new Date();
+
+    switch (range) {
+      case 'daily':
+        start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+        break;
+      case 'weekly':
+        const dayOfWeek = now.getDay();
+        start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek);
+        end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + (7 - dayOfWeek));
+        break;
+      case 'monthly':
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        break;
+      case 'yearly':
+        start = new Date(now.getFullYear(), 0, 1);
+        end = new Date(now.getFullYear() + 1, 0, 1);
+        break;
+      case 'custom':
+        start = startDate ? new Date(startDate) : new Date('1970-01-01');
+        end = endDate ? new Date(endDate) : new Date();
+        end.setDate(end.getDate() + 1); // Include full end date
+        break;
+      default:
+        return res.json({ orders: [] });
+    }
+
+    // Fetch orders with user and product details, sorted by latest first
+    const orders = await Order.find({
+      createdOn: { $gte: start, $lt: end }
+    })
+      .sort({ createdOn: -1 }) // latest first
+      .populate('userId', 'name')
+      .populate('product._id') // to access product prices
+      .lean();
+
+    const formattedOrders = orders.map(order => {
+      let productDiscount = 0;
+
+        // Loop through products and calculate product discount
+        if (Array.isArray(order.product)) {
+          order.product.forEach(item => {
+            const product = item._id; // Populated Product
+            const quantity = item.quantity || 1;
+            if (product && product.regularPrice && product.salePrice) {
+              const discount = (product.regularPrice - product.salePrice) * quantity;
+              productDiscount += discount;
+            }
+          });
+        }
+
+         const totalRegularPrice = order.product.reduce((sum, item) =>
+          sum + ((item._id?.regularPrice || 0) * item.quantity), 0);
+
+      return {
+        id: order.orderId || order._id.toString(),
+        user: order.userId?.name || 'Guest',
+        date: order.createdOn,
+        total: totalRegularPrice || 0,
+        couponDiscount: order.discount || 0,
+        productDiscount: Math.round(productDiscount), // Round if needed
+        final: order.finalAmount || order.totalPrice || 0,
+        payment: order.payment || 'N/A'
+      };
+    });
+
+    res.json({ orders: formattedOrders });
+  } catch (error) {
+    console.error('Error fetching filtered sales report:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+const loadSalesReport = async (req,res) => {
+    if(req.session.admin){
+        try {
+            
+            res.render("salesReport")
+
+        } catch (error) {
+            res.redirect("/admin/pageerror")
+        }
+    }
+    
+}
 
 
 
 
 
-
-module.exports = {loadLogin, login,loadDashboard,pageerror,logout,getDashboardSummary,downloadSalesReport}
+module.exports = {loadLogin, login,loadDashboard,pageerror,logout,getDashboardSummary,downloadSalesReport,getFilteredSalesReportTable, loadSalesReport}
