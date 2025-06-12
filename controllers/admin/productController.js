@@ -338,9 +338,7 @@ const editProduct = async (req, res) => {
       console.error("Error in editProduct:", error);
       res.status(500).json({ success: false, message: "An error occurred while updating the product" });
     }
-  };
-  
-  
+  }; 
   
   const deleteSingleImage = async (req, res) => {
     try {

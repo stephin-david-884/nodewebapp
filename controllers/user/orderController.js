@@ -398,9 +398,19 @@ const cancelOrder = async (req, res) => {
       return res.status(400).json({ message: "Item already cancelled" });
     }
 
+    const itemTotal = orderItem.price * orderItem.quantity;
+    let refundAmount = itemTotal;
+
+    // Apply proportional discount only if coupon discount exists
+    if (order.discount > 0 && order.totalPrice > 0) {
+      const proportionalDiscount = (itemTotal / order.totalPrice) * order.discount;
+      refundAmount -= proportionalDiscount;
+      refundAmount = Math.round(refundAmount); // Optional: round to nearest integer
+    }
+
     // Refund logic for Razorpay or Wallet payments
     if ((order.payment === "razorpay" || order.payment === "wallet") && order.status === "Confirmed") {
-      const refundAmount = orderItem.price * orderItem.quantity;
+      
       user.wallet += refundAmount;
 
       // Wallet history update
@@ -417,15 +427,32 @@ const cancelOrder = async (req, res) => {
     // Update product status to Cancel
    order.product[productIndex].productStatus = "Cancel";
 
-    // Recalculate total and final
+    // Step 1: Recalculate new total (non-cancelled items)
     let newTotal = 0;
     order.product.forEach(p => {
       if (p.productStatus !== "Cancel") {
         newTotal += p.price * p.quantity;
       }
     });
+
     order.totalPrice = newTotal;
-    order.finalAmount = newTotal - order.discount;
+
+    // Step 2: Recalculate proportional coupon discount
+    let newDiscount = 0;
+    if (order.discount > 0) {
+      // Calculate based on original total before any cancellations
+      const originalTotal = order.product.reduce((sum, p) => {
+        return sum + (p.price * p.quantity);
+      }, 0);
+
+      newDiscount = Math.round((newTotal / originalTotal) * order.discount);
+    }
+
+    order.discount = newDiscount;
+
+    // Step 3: Update final amount
+    order.finalAmount = newTotal - newDiscount;
+
 
     // Update order.status if needed
     const allCancelled = order.product.every(p => p.productStatus === "Cancel");
