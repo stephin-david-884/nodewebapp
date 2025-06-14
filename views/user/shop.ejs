@@ -215,6 +215,7 @@
    text-align: center;
  }
 </style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 
 <div class="main-container">
@@ -275,19 +276,36 @@
 
 
      <main class="product-grid">
-        <%for(let i=0;i<products.length;i++){%>
-         <div class="product-card">
-           <span class="wishlist-btn" onclick="addToWishlist('<%=products[i]._id%>')">❤️</span>
-           <a href="/productDetails?id=<%=products[i]._id%>">
-             <img src="<%=products[i].productImage[0]%>" alt="<%=products[i].productName%>" />
-             <h4><%=products[i].productName%></h4>
-             <p>Brand:<%=products[i].brand%></p>
-             <p>Price:₹<%=products[i].salePrice.toLocaleString('en-IN')%><span class="text-muted"><strike>₹<%=products[i].regularPrice.toLocaleString('en-IN')%></strike></span></p>
-           </a>
-           <%#<button class="add-to-cart-btn" onclick="">Add to Cart</button> %>
-         </div>
-         <%}%> 
-     </main>
+  <% for (let i = 0; i < products.length; i++) { 
+       const isWishlisted = wishlistProductIds.includes(products[i]._id.toString());
+  %>
+    <div class="product-card position-relative">
+
+      <!-- Wishlist Button -->
+      <span 
+        class="wishlist-btn" 
+        onclick="addToWishlist('<%= products[i]._id %>')">
+        <i class="<%= isWishlisted ? 'fas' : 'far' %> fa-heart"
+           style="color: <%= isWishlisted ? 'red' : 'black' %>; font-size: 20px;"></i>
+      </span>
+
+      <a href="/productDetails?id=<%= products[i]._id %>">
+        <img src="<%= products[i].productImage[0] %>" alt="<%= products[i].productName %>" />
+        <h4><%= products[i].productName %></h4>
+        <p>Brand: <%= products[i].brand %></p>
+        <p>
+          Price: ₹<%= products[i].salePrice.toLocaleString('en-IN') %>
+          <span class="text-muted">
+            <strike>₹<%= products[i].regularPrice.toLocaleString('en-IN') %></strike>
+          </span>
+        </p>
+      </a>
+
+    </div>
+  <% } %>
+</main>
+
+
    </div>
 
 
@@ -313,43 +331,47 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-
   function addToWishlist(productId) {
-    
     $.ajax({
-
-      url:'/addToWishlist',
-      method:'POST',
-      data:{productId : productId},
-      success:(response)=>{
-        if(response.status){
+      url: '/addToWishlist',
+      method: 'POST',
+      data: { productId: productId },
+      success: (response) => {
+        if (response.status) {
           Swal.fire({
-            title:'Added to wishlist',
+            title: 'Added to wishlist',
             text: 'The product has been added to your wishlist',
-            icon:'success',
-            timer:2000
-          })
-        }else{
+            icon: 'success',
+            timer: 2000
+          });
+
+          // 🔄 Toggle icon to filled red heart
+          const icon = document.querySelector(`.wishlist-btn[onclick="addToWishlist('${productId}')"] i`);
+          if (icon) {
+            icon.classList.remove('far');
+            icon.classList.add('fas');
+            icon.style.color = 'red';
+          }
+
+        } else {
           Swal.fire({
-            title:'Already in wishlist',
+            title: 'Already in wishlist',
             text: response.message,
-            icon:'info',
-            timer:2000
-          })
+            icon: 'info',
+            timer: 2000
+          });
         }
       },
-      error:(error)=>{
+      error: (error) => {
         Swal.fire({
-            title:'Error',
-            text: 'There was an error adding the product to your wishlist',
-            icon:'error',
-            timer:2000
-          })
+          title: 'Error',
+          text: 'There was an error adding the product to your wishlist',
+          icon: 'error',
+          timer: 2000
+        });
       }
-
-    })
-
+    });
   }
-
 </script>
+
 <%- include("../../views/partials/user/footer") %>

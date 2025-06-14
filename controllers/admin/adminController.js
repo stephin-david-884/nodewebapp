@@ -74,54 +74,130 @@ const logout = async (req,res) => {
 }
 
 const getDashboardSummary = async (req, res) => {
-  const today = new Date();
-  const from = new Date();
-  from.setDate(today.getDate() - 6); // Last 7 days
+  const range = req.query.range || 'last7';
+  let from, to = new Date();
+  const now = new Date();
 
-  const orders = await Order.find({
-    createdOn: { $gte: from },
-    status: { $ne: "Cancelled" }
-  }).populate('userId'); // ✅ Correct field for population
+  // Initialize arrays
+  let labels = [];
+  let sales = [];
 
-  const dailySales = Array(7).fill(0);
-  const labels = Array(7).fill().map((_, i) => {
-    const date = new Date();
-    date.setDate(today.getDate() - 6 + i);
-    return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-  });
+  // Set date range and labels based on selected filter
+  switch (range) {
+    case 'yearly':
+      from = new Date(now.getFullYear() - 4, 0, 1); // 5 years including current
+      labels = Array.from({ length: 5 }, (_, i) => `${now.getFullYear() - 4 + i}`);
+      sales = Array(5).fill(0);
+      break;
 
-  orders.forEach(order => {
-    const dayIndex = Math.floor((new Date(order.createdOn) - from) / (1000 * 60 * 60 * 24));
-    if (dayIndex >= 0 && dayIndex < 7) {
-      dailySales[dayIndex] += order.finalAmount;
+    case 'monthly':
+      from = new Date(now.getFullYear(), now.getMonth() - 11, 1); // Last 12 months
+      labels = Array.from({ length: 12 }, (_, i) => {
+        const date = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
+        return date.toLocaleString('default', { month: 'short', year: 'numeric' });
+      });
+      sales = Array(12).fill(0);
+      break;
+
+    case 'last7':
+    default:
+      from = new Date();
+      from.setDate(now.getDate() - 6);
+      labels = Array.from({ length: 7 }, (_, i) => {
+        const date = new Date(from);
+        date.setDate(from.getDate() + i);
+        return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+      });
+      sales = Array(7).fill(0);
+      break;
+
+    case 'custom':
+    const { startDate, endDate } = req.query;
+    if (!startDate || !endDate) {
+      return res.status(400).json({ error: "Start and End date required" });
     }
-  });
+    from = new Date(startDate);
+    to = new Date(endDate);
+    to.setHours(23, 59, 59, 999); // include full end day
 
-  const totalAmount = orders.reduce((sum, o) => sum + o.totalPrice, 0);
-  const totalDiscount = orders.reduce((sum, o) => sum + o.discount, 0);
-  const totalOrders = orders.length;
+    const diffInDays = Math.floor((to - from) / (1000 * 60 * 60 * 24)) + 1;
+    labels = Array.from({ length: diffInDays }, (_, i) => {
+      const date = new Date(from);
+      date.setDate(from.getDate() + i);
+      return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+    });
+    sales = Array(diffInDays).fill(0);
+    break;  
+  }
 
-  // ✅ Correct user field reference
-  const tableOrders = orders.map(order => ({
-    id: order._id.toString(),
-    user: order.userId?.name || 'Guest',
-    date: order.createdOn,
-    total: order.totalPrice,
-    couponDiscount: order.couponDiscount || 0,
-    productDiscount: order.discount || 0,
-    final: order.finalAmount,
-    payment: order.payment?.method || 'Unknown'
-  }));
+  try {
+    const orders = await Order.find({
+      createdOn: { $gte: from, $lte: to },
+      status: { $ne: "Cancelled" }
+    }).populate('userId');
 
-  res.json({
-    totalAmount,
-    totalDiscount,
-    totalOrders,
-    sales: dailySales,
-    labels,
-    orders: tableOrders
-  });
+    orders.forEach(order => {
+      const created = new Date(order.createdOn);
+
+      if (range === 'last7') {
+        const diff = Math.floor((created - from) / (1000 * 60 * 60 * 24));
+        if (diff >= 0 && diff < 7) {
+          sales[diff] += order.finalAmount;
+        }
+      }
+
+      else if (range === 'monthly') {
+        const monthIndex = (created.getFullYear() - from.getFullYear()) * 12 + created.getMonth() - from.getMonth();
+        if (monthIndex >= 0 && monthIndex < 12) {
+          sales[monthIndex] += order.finalAmount;
+        }
+      }
+
+      else if (range === 'yearly') {
+        const yearIndex = created.getFullYear() - from.getFullYear();
+        if (yearIndex >= 0 && yearIndex < 5) {
+          sales[yearIndex] += order.finalAmount;
+        }
+      }
+
+      else if (range === 'custom') {
+      const dayDiff = Math.floor((created - from) / (1000 * 60 * 60 * 24));
+      if (dayDiff >= 0 && dayDiff < sales.length) {
+        sales[dayDiff] += order.finalAmount;
+      }
+    }
+    });
+
+    const totalAmount = orders.reduce((sum, o) => sum + o.totalPrice, 0);
+    const totalDiscount = orders.reduce((sum, o) => sum + o.discount, 0);
+    const totalOrders = orders.length;
+
+    const tableOrders = orders.map(order => ({
+      id: order._id.toString(),
+      user: order.userId?.name || 'Guest',
+      date: order.createdOn,
+      total: order.totalPrice,
+      couponDiscount: order.couponDiscount || 0,
+      productDiscount: order.discount || 0,
+      final: order.finalAmount,
+      payment: order.payment || 'Unknown'
+    }));
+
+    res.json({
+      totalAmount,
+      totalDiscount,
+      totalOrders,
+      sales,
+      labels,
+      orders: tableOrders
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch dashboard summary' });
+  }
 };
+
 
 
 const downloadSalesReport = async (req, res) => {

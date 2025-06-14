@@ -66,6 +66,8 @@ const loadShoppingPage = async (req, res) => {
         const user = req.session.user;
         const userData = await User.findOne({ _id: user });
 
+        const wishlistProductIds = userData?.wishlist?.map(id => id.toString()) || [];
+
         const categories = await Category.find({ isListed: true });
         const categoryIds = categories.map((category) => category._id.toString());
 
@@ -108,6 +110,7 @@ const loadShoppingPage = async (req, res) => {
             totalProducts: totalProducts,
             currentPage: page,
             totalPages: totalPages,
+            wishlistProductIds: wishlistProductIds
         });
 
     } catch (error) {

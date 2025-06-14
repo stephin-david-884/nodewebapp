@@ -105,6 +105,7 @@ router.post('/updateCartSize', userAuth, cartController.updateCartSize);
 router.get("/wishlist", userAuth,wishlistController.loadWishlist);
 router.post("/addToWishlist", userAuth, wishlistController.addToWishlist)
 router.get("/removeFromWishlist", userAuth, wishlistController.removeProduct)
+router.post("/wishlist/addToCart", userAuth, wishlistController.addToCartWish)
 
 //Order Management
 router.get("/checkout", userAuth, orderController.getCheckoutPage)

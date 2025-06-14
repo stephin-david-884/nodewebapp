@@ -26,9 +26,28 @@
   </div>
 </div>
 
+<div class="d-flex justify-content-between align-items-center mb-3 px-3">
+  <h5 class="card-title">Sales Overview</h5>
+  <select id="salesRange" class="form-select w-auto" onchange="fetchDashboardData(this.value)">
+    <option value="last7">Last 7 Days</option>
+    <option value="monthly">Monthly</option>
+    <option value="yearly">Yearly</option>
+    <option value="custom">Custom Range</option>
+  </select>
+</div>
+<div class="mb-3 d-flex gap-2">
+  <label>Start Date</label>
+  <input type="date" id="startDate" class="form-control" />
+  <label>End Date</label>
+  <input type="date" id="endDate" class="form-control" />
+  <button class="btn btn-primary" onclick="applyCustomRange()">Apply</button>
+</div>
+
+
+
 <div class="card mb-4">
   <div class="card-body">
-    <h5 class="card-title">Sales in the Last 7 Days</h5>
+    <h5 class="card-title">Sales</h5>
     <canvas id="salesChart" height="100"></canvas>
   </div>
 </div>
@@ -36,83 +55,22 @@
  
 
 </section>
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-  document.getElementById('range').addEventListener('change', function () {
-    document.getElementById('customDate').style.display = this.value === 'custom' ? 'block' : 'none';
-  });
+  let chartInstance;
 
-  document.getElementById('salesFilterForm').addEventListener('submit', async function (e) {
-  e.preventDefault();
-  const formData = new FormData(this);
-  const response = await fetch('/admin/sales-report', {
-    method: 'POST',
-    body: new URLSearchParams(formData),
-  });
-  const data = await response.json(); 
-
-  // Populate summary
-  document.getElementById('salesSummary').innerHTML = `
-    <div class="col">Total Orders: ${data.totalOrders}</div>
-    <div class="col">Total Sales: ₹${data.totalAmount}</div>
-    <div class="col">Total Discount: ₹${data.totalDiscount}</div>
-  `;
-
-  // Populate table
-  const tbody = document.querySelector("#salesReportTable tbody");
-  tbody.innerHTML = "";
-  data.orders.forEach((order, index) => {
-    const row = `
-      <tr>
-        <td>${index + 1}</td>
-        <td>${order.id.slice(-8)}</td>
-        <td>${order.user}</td>
-        <td>${new Date(order.date).toLocaleDateString()}</td>
-        <td>₹${order.total}</td>
-        <td>₹${order.couponDiscount}</td>
-        <td>₹${order.productDiscount}</td>
-        <td>₹${order.final}</td>
-        <td>${order.payment}</td>
-      </tr>`;
-    tbody.insertAdjacentHTML('beforeend', row);
-  });
-
-  // Chart update
-  const chart = new Chart(document.getElementById('salesChart'), {
-    type: 'bar',
-    data: {
-      labels: data.labels,
-      datasets: [{
-        label: 'Sales',
-        data: data.sales,
-        backgroundColor: '#4e73df',
-      }]
+  async function fetchDashboardData(range, startDate = '', endDate = '') {
+    let url = `/admin/sales-summary?range=${range}`;
+    if (range === 'custom') {
+      if (!startDate || !endDate) {
+        return Swal.fire("Invalid Range", "Please select both start and end dates", "warning");
+      }
+      url += `&startDate=${startDate}&endDate=${endDate}`;
     }
-  });
-});
 
-
-  document.getElementById('downloadPdf').addEventListener('click', () => {
-  const range = document.getElementById('range').value;
-  const startDate = document.getElementById('startDate')?.value || '';
-  const endDate = document.getElementById('endDate')?.value || '';
-  const query = `?format=pdf&range=${range}&startDate=${startDate}&endDate=${endDate}`;
-  window.location.href = '/admin/download-sales-report' + query;
-});
-
-document.getElementById('downloadExcel').addEventListener('click', () => {
-  const range = document.getElementById('range').value;
-  const startDate = document.getElementById('startDate')?.value || '';
-  const endDate = document.getElementById('endDate')?.value || '';
-  const query = `?format=excel&range=${range}&startDate=${startDate}&endDate=${endDate}`;
-  window.location.href = '/admin/download-sales-report' + query;
-});
-
-</script>
-<script>
-  async function fetchInitialDashboardData() {
-    const res = await fetch("/admin/sales-summary");
+    const res = await fetch(url);
     const data = await res.json();
 
     document.getElementById("summaryOrders").innerText = data.totalOrders;
@@ -120,12 +78,14 @@ document.getElementById('downloadExcel').addEventListener('click', () => {
     document.getElementById("summaryDiscount").innerText = `₹${data.totalDiscount}`;
 
     const ctx = document.getElementById("salesChart").getContext("2d");
-    new Chart(ctx, {
+    if (chartInstance) chartInstance.destroy(); // destroy old chart if exists
+
+    chartInstance = new Chart(ctx, {
       type: 'line',
       data: {
         labels: data.labels,
         datasets: [{
-          label: 'Daily Sales ₹',
+          label: 'Sales ₹',
           data: data.sales,
           borderColor: '#4e73df',
           fill: true,
@@ -136,47 +96,18 @@ document.getElementById('downloadExcel').addEventListener('click', () => {
     });
   }
 
-  fetchInitialDashboardData();
+  function applyCustomRange() {
+    const startDate = document.getElementById("startDate").value;
+    const endDate = document.getElementById("endDate").value;
+    fetchDashboardData("custom", startDate, endDate);
+  }
+
+  // On initial load
+  fetchDashboardData("last7");
 </script>
-<script>
-  document.getElementById('reportRange').addEventListener('change', function () {
-    document.getElementById('reportCustomDate').style.display = this.value === 'custom' ? 'block' : 'none';
-  });
 
-  document.getElementById('reportFilterForm').addEventListener('submit', async function (e) {
-    e.preventDefault();
-    const range = document.getElementById('reportRange').value;
-    const startDate = document.getElementById('reportStartDate').value;
-    const endDate = document.getElementById('reportEndDate').value;
 
-    const response = await fetch('/admin/filter-sales-table', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ range, startDate, endDate })
-    });
 
-    const data = await response.json();
-    const tbody = document.querySelector("#salesReportTable tbody");
-    tbody.innerHTML = "";
-    data.orders.forEach((order, index) => {
-      const row = `
-        <tr>
-          <td>${index + 1}</td>
-          <td>${order.id.slice(-8)}</td>
-          <td>${order.user}</td>
-          <td>${new Date(order.date).toLocaleDateString()}</td>
-          <td>₹${order.total}</td>
-          <td>₹${order.couponDiscount}</td>
-          
-          <td>₹${order.final}</td>
-          <td>${order.payment}</td>
-        </tr>`;
-      tbody.insertAdjacentHTML('beforeend', row);
-    });
-  });
-</script>
 
 
 <%- include("../../views/partials/admin/footer") %>

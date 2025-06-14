@@ -50,4 +50,64 @@ const removeProduct = async (req,res) => {
     }
 }
 
-module.exports = {loadWishlist, addToWishlist, removeProduct}
+const addToCartWish = async (req, res) => {
+  try {
+    const { productId, size, quantity } = req.body;
+    const userId = req.session.user;
+
+    // Basic validation
+    if (!productId || !size || !quantity) {
+      return res.status(400).json({ status: false, message: "Missing data" });
+    }
+
+    const qty = parseInt(quantity);
+    if (qty < 1 || qty > 3) {
+      return res.status(400).json({ status: false, message: "Quantity must be between 1 and 3" });
+    }
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ status: false, message: "Product not found" });
+    }
+
+    // Check if selected size has enough stock
+    const availableQty = product.sizes?.[size];
+    if (!availableQty || availableQty < qty) {
+      return res.status(400).json({ status: false, message: "Insufficient stock for selected size" });
+    }
+
+    const user = await User.findById(userId);
+
+    // Check if product already exists in cart with same size
+    const existingItem = user.cart.find(
+      (item) => item.productId.toString() === productId && item.size === size
+    );
+
+    if (existingItem) {
+      const newQty = existingItem.quantity + qty;
+      if (newQty > 3) {
+        return res.status(400).json({ status: false, message: "Maximum quantity (3) exceeded" });
+      }
+      existingItem.quantity = newQty;
+    } else {
+      user.cart.push({ productId, quantity: qty, size });
+    }
+
+    // Remove product from wishlist
+    user.wishlist.pull(productId);
+
+    await user.save();
+
+    return res.status(200).json({
+      status: true,
+      message: "Added to cart and removed from wishlist",
+      cartLength: user.cart.length,
+    });
+
+  } catch (error) {
+    console.error("Error in addToCartWish:", error);
+    return res.status(500).json({ status: false, message: "Server error" });
+  }
+};
+
+module.exports = {loadWishlist, addToWishlist, removeProduct, addToCartWish}
