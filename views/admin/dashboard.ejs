@@ -51,6 +51,26 @@
     <canvas id="salesChart" height="100"></canvas>
   </div>
 </div>
+<div class="row mt-4">
+  <div class="col-md-4">
+    <div class="card p-3">
+      <h5 class="card-title">Top 3 Products</h5>
+      <ul class="list-group list-group-flush" id="bestProductsList"></ul>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card p-3">
+      <h5 class="card-title">Top 3 Brands</h5>
+      <ul class="list-group list-group-flush" id="bestBrandsList"></ul>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card p-3">
+      <h5 class="card-title">Top 3 Categories</h5>
+      <ul class="list-group list-group-flush" id="bestCategoriesList"></ul>
+    </div>
+  </div>
+</div>
 
  
 
@@ -94,6 +114,25 @@
         }]
       }
     });
+    function renderTopList(containerId, items) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = ''; // Clear old
+      if (!items || items.length === 0) {
+        container.innerHTML = '<li class="list-group-item">No data</li>';
+        return;
+      }
+
+      items.forEach(([name, qty]) => {
+        const li = document.createElement("li");
+        li.className = "list-group-item d-flex justify-content-between";
+        li.innerHTML = `<span>${name}</span><span><strong>${qty}</strong></span>`;
+        container.appendChild(li);
+      });
+    }
+
+    renderTopList("bestProductsList", data.bestProducts);
+    renderTopList("bestBrandsList", data.bestBrands);
+    renderTopList("bestCategoriesList", data.bestCategories);
   }
 
   function applyCustomRange() {

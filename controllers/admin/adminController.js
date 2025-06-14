@@ -73,30 +73,44 @@ const logout = async (req,res) => {
     }
 }
 
+
 const getDashboardSummary = async (req, res) => {
   const range = req.query.range || 'last7';
   let from, to = new Date();
   const now = new Date();
+  let labels = [], sales = [];
 
-  // Initialize arrays
-  let labels = [];
-  let sales = [];
-
-  // Set date range and labels based on selected filter
   switch (range) {
     case 'yearly':
-      from = new Date(now.getFullYear() - 4, 0, 1); // 5 years including current
+      from = new Date(now.getFullYear() - 4, 0, 1);
       labels = Array.from({ length: 5 }, (_, i) => `${now.getFullYear() - 4 + i}`);
       sales = Array(5).fill(0);
       break;
 
     case 'monthly':
-      from = new Date(now.getFullYear(), now.getMonth() - 11, 1); // Last 12 months
+      from = new Date(now.getFullYear(), now.getMonth() - 11, 1);
       labels = Array.from({ length: 12 }, (_, i) => {
         const date = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
         return date.toLocaleString('default', { month: 'short', year: 'numeric' });
       });
       sales = Array(12).fill(0);
+      break;
+
+    case 'custom':
+      const { startDate, endDate } = req.query;
+      if (!startDate || !endDate) {
+        return res.status(400).json({ error: "Start and End date required" });
+      }
+      from = new Date(startDate);
+      to = new Date(endDate);
+      to.setHours(23, 59, 59, 999);
+      const diffInDays = Math.floor((to - from) / (1000 * 60 * 60 * 24)) + 1;
+      labels = Array.from({ length: diffInDays }, (_, i) => {
+        const date = new Date(from);
+        date.setDate(from.getDate() + i);
+        return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+      });
+      sales = Array(diffInDays).fill(0);
       break;
 
     case 'last7':
@@ -110,62 +124,35 @@ const getDashboardSummary = async (req, res) => {
       });
       sales = Array(7).fill(0);
       break;
-
-    case 'custom':
-    const { startDate, endDate } = req.query;
-    if (!startDate || !endDate) {
-      return res.status(400).json({ error: "Start and End date required" });
-    }
-    from = new Date(startDate);
-    to = new Date(endDate);
-    to.setHours(23, 59, 59, 999); // include full end day
-
-    const diffInDays = Math.floor((to - from) / (1000 * 60 * 60 * 24)) + 1;
-    labels = Array.from({ length: diffInDays }, (_, i) => {
-      const date = new Date(from);
-      date.setDate(from.getDate() + i);
-      return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-    });
-    sales = Array(diffInDays).fill(0);
-    break;  
   }
 
   try {
     const orders = await Order.find({
       createdOn: { $gte: from, $lte: to },
       status: { $ne: "Cancelled" }
-    }).populate('userId');
+    })
+      .populate("userId")
+      .populate({
+          path: "product._id",
+          populate: { path: "category" }
+        })
 
+    // Chart Sales Data
     orders.forEach(order => {
       const created = new Date(order.createdOn);
-
       if (range === 'last7') {
         const diff = Math.floor((created - from) / (1000 * 60 * 60 * 24));
-        if (diff >= 0 && diff < 7) {
-          sales[diff] += order.finalAmount;
-        }
-      }
-
-      else if (range === 'monthly') {
+        if (diff >= 0 && diff < 7) sales[diff] += order.finalAmount;
+      } else if (range === 'monthly') {
         const monthIndex = (created.getFullYear() - from.getFullYear()) * 12 + created.getMonth() - from.getMonth();
-        if (monthIndex >= 0 && monthIndex < 12) {
-          sales[monthIndex] += order.finalAmount;
-        }
-      }
-
-      else if (range === 'yearly') {
+        if (monthIndex >= 0 && monthIndex < 12) sales[monthIndex] += order.finalAmount;
+      } else if (range === 'yearly') {
         const yearIndex = created.getFullYear() - from.getFullYear();
-        if (yearIndex >= 0 && yearIndex < 5) {
-          sales[yearIndex] += order.finalAmount;
-        }
+        if (yearIndex >= 0 && yearIndex < 5) sales[yearIndex] += order.finalAmount;
+      } else if (range === 'custom') {
+        const dayDiff = Math.floor((created - from) / (1000 * 60 * 60 * 24));
+        if (dayDiff >= 0 && dayDiff < sales.length) sales[dayDiff] += order.finalAmount;
       }
-
-      else if (range === 'custom') {
-      const dayDiff = Math.floor((created - from) / (1000 * 60 * 60 * 24));
-      if (dayDiff >= 0 && dayDiff < sales.length) {
-        sales[dayDiff] += order.finalAmount;
-      }
-    }
     });
 
     const totalAmount = orders.reduce((sum, o) => sum + o.totalPrice, 0);
@@ -183,13 +170,45 @@ const getDashboardSummary = async (req, res) => {
       payment: order.payment || 'Unknown'
     }));
 
+    // 🛒 Top Sellers: Product, Brand, Category
+    const productSales = {};
+    const brandSales = {};
+    const categorySales = {};
+
+    orders.forEach(order => {
+      order.product.forEach(item => {
+        const prod = item._id; // populated Product doc
+        if (!prod || typeof prod !== 'object') return;
+
+        // Product Name
+        if (prod.productName)
+          productSales[prod.productName] = (productSales[prod.productName] || 0) + item.quantity;
+
+        // Brand
+        if (prod.brand)
+          brandSales[prod.brand] = (brandSales[prod.brand] || 0) + item.quantity;
+
+        // Category (check if populated)
+        const categoryName = typeof prod.category === 'object' ? prod.category.name : prod.category;
+        if (categoryName)
+          categorySales[categoryName] = (categorySales[categoryName] || 0) + item.quantity;
+      });
+    });
+
+    const topProducts = Object.entries(productSales).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    const topBrands = Object.entries(brandSales).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    const topCategories = Object.entries(categorySales).sort((a, b) => b[1] - a[1]).slice(0, 3);
+
     res.json({
       totalAmount,
       totalDiscount,
       totalOrders,
       sales,
       labels,
-      orders: tableOrders
+      orders: tableOrders,
+      bestProducts: topProducts,
+      bestBrands: topBrands,
+      bestCategories: topCategories,
     });
 
   } catch (err) {
@@ -197,6 +216,8 @@ const getDashboardSummary = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch dashboard summary' });
   }
 };
+
+
 
 
 
