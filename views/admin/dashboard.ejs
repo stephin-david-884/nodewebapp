@@ -52,19 +52,21 @@
   </div>
 </div>
 <div class="row mt-4">
-  <div class="col-md-4">
+  <div class="col-md-12">
     <div class="card p-3">
       <h5 class="card-title">Top 3 Products</h5>
       <ul class="list-group list-group-flush" id="bestProductsList"></ul>
     </div>
   </div>
-  <div class="col-md-4">
+  </div>
+  <div class="row mt-4">
+  <div class="col-md-6">
     <div class="card p-3">
       <h5 class="card-title">Top 3 Brands</h5>
-      <ul class="list-group list-group-flush" id="bestBrandsList"></ul>
+      <ul class="list-group list-group-flush " id="bestBrandsList"></ul>
     </div>
   </div>
-  <div class="col-md-4">
+  <div class="col-md-6">
     <div class="card p-3">
       <h5 class="card-title">Top 3 Categories</h5>
       <ul class="list-group list-group-flush" id="bestCategoriesList"></ul>
@@ -124,13 +126,38 @@
 
       items.forEach(([name, qty]) => {
         const li = document.createElement("li");
-        li.className = "list-group-item d-flex justify-content-between";
+        li.className = "list-group-item d-flex justify-content-between align-items-center";
         li.innerHTML = `<span>${name}</span><span><strong>${qty}</strong></span>`;
         container.appendChild(li);
       });
     }
 
-    renderTopList("bestProductsList", data.bestProducts);
+   function renderTopProducts(containerId, products) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+
+      if (!products || products.length === 0) {
+        container.innerHTML = '<li class="list-group-item">No data</li>';
+        return;
+      }
+
+      products.forEach(prod => {
+        const li = document.createElement("li");
+        li.className = "list-group-item d-flex align-items-center";
+        li.innerHTML = `
+          <img src="${prod.image}" alt="${prod.name}" class="rounded me-2" style="width: 100px; height: 100px; object-fit: cover;">
+          <div class="flex-grow-1">
+            <strong>${prod.name}</strong><br>
+            <small class="text-muted">${prod.brand}</small>
+          </div>
+          <span class="badge bg-dark ">${prod.quantity}</span>
+        `;
+        container.appendChild(li);
+      });
+    }
+ 
+
+    renderTopProducts("bestProductsList", data.bestProducts);
     renderTopList("bestBrandsList", data.bestBrands);
     renderTopList("bestCategoriesList", data.bestCategories);
   }

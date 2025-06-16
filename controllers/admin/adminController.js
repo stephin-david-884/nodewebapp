@@ -171,31 +171,47 @@ const getDashboardSummary = async (req, res) => {
     }));
 
     // 🛒 Top Sellers: Product, Brand, Category
-    const productSales = {};
-    const brandSales = {};
-    const categorySales = {};
+    const productCountMap = new Map();
+const brandSales = {};
+const categorySales = {};
 
-    orders.forEach(order => {
-      order.product.forEach(item => {
-        const prod = item._id; // populated Product doc
-        if (!prod || typeof prod !== 'object') return;
+orders.forEach(order => {
+  order.product.forEach(item => {
+    const prod = item._id; // populated Product doc
+    if (!prod || typeof prod !== 'object') return;
 
-        // Product Name
-        if (prod.productName)
-          productSales[prod.productName] = (productSales[prod.productName] || 0) + item.quantity;
-
-        // Brand
-        if (prod.brand)
-          brandSales[prod.brand] = (brandSales[prod.brand] || 0) + item.quantity;
-
-        // Category (check if populated)
-        const categoryName = typeof prod.category === 'object' ? prod.category.name : prod.category;
-        if (categoryName)
-          categorySales[categoryName] = (categorySales[categoryName] || 0) + item.quantity;
+    // Track Product sales using _id
+    const prodId = prod._id.toString();
+    if (!productCountMap.has(prodId)) {
+      productCountMap.set(prodId, {
+        doc: prod,
+        qty: 0
       });
-    });
+    }
+    productCountMap.get(prodId).qty += item.quantity;
 
-    const topProducts = Object.entries(productSales).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    // Brand count
+    if (prod.brand)
+      brandSales[prod.brand] = (brandSales[prod.brand] || 0) + item.quantity;
+
+    // Category
+    const categoryName = typeof prod.category === 'object' ? prod.category.name : prod.category;
+    if (categoryName)
+      categorySales[categoryName] = (categorySales[categoryName] || 0) + item.quantity;
+  });
+});
+
+
+    const topProducts = Array.from(productCountMap.entries())
+  .sort((a, b) => b[1].qty - a[1].qty)
+  .slice(0, 3)
+  .map(([id, { doc, qty }]) => ({
+    name: doc.productName,
+    brand: doc.brand || '',
+    image: doc.productImage?.[0] || '',
+    quantity: qty
+  }));
+
     const topBrands = Object.entries(brandSales).sort((a, b) => b[1] - a[1]).slice(0, 3);
     const topCategories = Object.entries(categorySales).sort((a, b) => b[1] - a[1]).slice(0, 3);
 
@@ -216,8 +232,6 @@ const getDashboardSummary = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch dashboard summary' });
   }
 };
-
-
 
 
 
