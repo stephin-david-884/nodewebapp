@@ -20,34 +20,45 @@ const pageNotFound = async (req,res) => {
 const loadHomepage = async (req, res) => {
     try {
         const today = new Date().toISOString();
+
         const findBanner = await Banner.find({
-            startDate:{$lt:new Date(today)},
-            endDate:{$gt: new Date(today)},
-        })
-        const user = req.session.user;
-        const categories = await Category.find({isListed:true})
-        let productData = await Product.find(
-            {
-                isBlocked:false,
-                category:{$in:categories.map(category=>category._id)},
-                quantity:{$gt:0}
-            }
-        )
+            startDate: { $lt: new Date(today) },
+            endDate: { $gt: new Date(today) },
+        });
 
-        productData.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
-        productData = productData.slice(0,4); 
+        const userId = req.session.user;
+        const categories = await Category.find({ isListed: true });
 
-        if (user) {
-            const userData = await User.findOne({_id: user._id});
-            res.render("home", { user: userData, products:productData, banner:findBanner || [] });
+        let productData = await Product.find({
+            isBlocked: false,
+            category: { $in: categories.map(category => category._id) },
+            quantity: { $gt: 0 }
+        });
+
+        productData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        productData = productData.slice(0, 4);
+
+        if (userId) {
+            const userData = await User.findById(userId);
+            res.render("home", {
+                user: userData,
+                products: productData,
+                banner: findBanner || []
+            });
         } else {
-            res.render("home", {products:productData, banner:findBanner || []});
+            res.render("home", {
+                user: null,
+                products: productData,
+                banner: findBanner || []
+            });
         }
+
     } catch (error) {
         console.log("Home page not found", error);
         res.status(500).send("Server error");
     }
 };
+
 
 
 const loadSignup = async (req,res) => {

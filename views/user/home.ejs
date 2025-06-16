@@ -178,20 +178,16 @@
                                   <img class="default-img" src="<%=products[i].productImage[0]%>" alt="<%=products[i].productName%>">
                               </a>
                           </div>
-                          <a href="" class="wishlist-btn">
-                              <i class="fas fa-heart"></i>
-                          </a>
+                          
                       </div>
 
-                      <div class="product-action-1">
-                        <a aria-label="Add to Wishlist" class="action-btn hover-up" href="/addToWishlist?id=<%products[i]._id%>"></a>
-                      </div>
+                      
 
 
                       <div class="product-content-wrap">
                           <h6><%=products[i].productName%></h6>
                           <h5>₹<%=products[i].salePrice%></h5>
-                          <a href="/addToCart?id=<%=products[i]._id%>">Add to cart</a>
+                          
                       </div>
                   </div>
               </div>
