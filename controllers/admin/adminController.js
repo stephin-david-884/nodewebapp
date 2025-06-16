@@ -225,6 +225,7 @@ orders.forEach(order => {
       bestProducts: topProducts,
       bestBrands: topBrands,
       bestCategories: topCategories,
+      categorySales,
     });
 
   } catch (err) {
