@@ -568,7 +568,22 @@
         $('#applyCouponBtn').prop("disabled", false);
         $('#removeCouponBtn').addClass("d-none");
         updateTotal(discount);
+
+        // ✅ Clear the coupon from backend session
+        $.ajax({
+            type: "POST",
+            url: "/remove-coupon",
+            success: function (response) {
+                if (response.success) {
+                    console.log("Coupon removed from session");
+                }
+            },
+            error: function () {
+                console.error("Failed to remove coupon from session");
+            }
+        });
     });
+
 
     function updateTotal(discount) {
         const originalTotal = parseInt(document.getElementById("originalTotal").dataset.original); // e.g. ₹1999

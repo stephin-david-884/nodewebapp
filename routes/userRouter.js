@@ -118,6 +118,7 @@ router.get("/downloadInvoice/:orderId", userAuth, orderController.getInvoice)
 router.post("/verifyPayment", userAuth, orderController.verifyPayment);
 router.post('/paymentConfirm',userAuth, orderController.paymentConfirm);
 router.post('/applyCoupon', userAuth, orderController.applyCoupon);
+router.post('/remove-coupon', userAuth, orderController.removeCoupon);
 router.post('/order/:orderId/return', userAuth, orderController.returnRequest);
 router.get("/retryPayment", userAuth, orderController.retryPayment);
 

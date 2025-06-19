@@ -101,7 +101,7 @@ const addProducts = async (req, res) => {
       console.error("Error saving product:", error);
       return res.status(500).json({ success: false, message: "Error saving product" });
     }
-  };
+};
 
 const getAllProducts =async (req,res) => {
     try {

@@ -687,6 +687,16 @@ const applyCoupon = async (req, res) => {
   }
 };
 
+const removeCoupon = (req, res) => {
+  try {
+    delete req.session.couponId;
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error removing coupon:", error);
+    res.status(500).json({ success: false });
+  }
+};
+
 
 const returnRequest = async (req, res) => {
   try {
@@ -749,4 +759,4 @@ const retryPayment = async (req, res) => {
 
 
 
- module.exports = {getCheckoutPage, deleteProduct, orderPlaced, getOrderDetailsPage, viewOrderDetails, cancelOrder,getInvoice, verifyPayment, paymentConfirm, applyCoupon, returnRequest, retryPayment}
+ module.exports = {getCheckoutPage, deleteProduct, orderPlaced, getOrderDetailsPage, viewOrderDetails, cancelOrder,getInvoice, verifyPayment, paymentConfirm, applyCoupon, returnRequest, retryPayment, removeCoupon}

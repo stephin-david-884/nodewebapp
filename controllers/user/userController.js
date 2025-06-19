@@ -365,8 +365,12 @@ const filterProduct = async (req, res) => {
         const brands = await Brand.find({ isBlocked: false }).lean(); // Only unblocked brands
 
         const query = {
-            isBlocked: false,
-            quantity: { $gt: 0 }
+        isBlocked: false,
+        $or: [
+            { 'sizes.S': { $gt: 0 } },
+            { 'sizes.M': { $gt: 0 } },
+            { 'sizes.L': { $gt: 0 } }
+        ]
         };
 
         if (findCategory) {
@@ -394,9 +398,11 @@ const filterProduct = async (req, res) => {
         const currentProduct = findProducts.slice(startIndex, endIndex);
 
         let userData = null;
+        let wishlistProductIds = [];
         if (user) {
             userData = await User.findOne({ _id: user });
             if (userData) {
+                wishlistProductIds = userData.wishlist.map(id => id.toString());
                 const searchEntry = {
                     category: findCategory ? findCategory._id : null,
                     brand: findBrand ? findBrand.brandName : null,
@@ -418,6 +424,7 @@ const filterProduct = async (req, res) => {
             currentPage,
             selectedCategory: category || null,
             selectedBrand: brand || null,
+            wishlistProductIds,
         });
 
     } catch (error) {
@@ -443,7 +450,11 @@ const filterPrice = async (req, res) => {
         let findProducts = await Product.find({
             salePrice: { $gt: req.query.gt, $lt: req.query.lt },
             isBlocked: false,
-            quantity: { $gt: 0 },
+            $or: [
+            { 'sizes.S': { $gt: 0 } },
+            { 'sizes.M': { $gt: 0 } },
+            { 'sizes.L': { $gt: 0 } }
+            ],
             brand: { $in: allowedBrandNames }
         }).lean();
 
@@ -457,6 +468,11 @@ const filterPrice = async (req, res) => {
         const totalPages = Math.ceil(findProducts.length / itemsPerPage);
         const currentProduct = findProducts.slice(startIndex, endIndex);
 
+        let wishlistProductIds = [];
+        if (userData) {
+            wishlistProductIds = userData.wishlist.map(id => id.toString());
+        }
+
         req.session.filteredProducts = findProducts;
 
         res.render("shop", {
@@ -466,6 +482,7 @@ const filterPrice = async (req, res) => {
             brand: brands,
             totalPages,
             currentPage,
+            wishlistProductIds,
         });
 
     } catch (error) {
