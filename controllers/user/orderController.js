@@ -18,6 +18,7 @@ const razorpayInstance = new razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET
 });
+const {sendOrderConfirmation, sendOrderCancellation} = require("../../helpers/mailer")
 
 
 const generateOrderRazorpay = async (orderId, totalAmount) => {
@@ -253,6 +254,12 @@ const orderPlaced = async (req, res) => {
 
     const orderDone = await newOrder.save();
 
+    try {
+      await sendOrderConfirmation(findUser.email, orderDone);
+    } catch (mailErr) {
+      console.error("Order placed, but email failed:", mailErr);
+    }
+
     // ✅ Mark coupon as used
     if (req.session.couponId) {
       await Coupon.updateOne(
@@ -476,6 +483,13 @@ if (product) {
     console.warn(`Size ${size} not found for product ${product._id}`);
   }
 }
+
+try {
+  await sendOrderCancellation(user.email, orderItem, order._id, refundAmount);
+} catch (emailErr) {
+  console.error("Cancellation email failed:", emailErr);
+}
+
 
 res.status(200).json({ message: "Product item cancelled successfully" });
 

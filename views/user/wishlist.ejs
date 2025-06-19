@@ -22,7 +22,7 @@
                   <th scope="col">Name</th>
                   <th scope="col">Price</th>
                   <th scope="col">Size</th>
-                  <th scope="col">Qty</th>
+                  
                   <th scope="col">Add to Cart</th>
                   <th scope="col">Remove</th>
                 </tr>
@@ -66,14 +66,7 @@
                         <% }) %>
                       </td>
 
-                      <!-- Quantity -->
-                      <td data-title="Qty">
-                        <div class="detail-qty border radius m-auto">
-                          <button class="btn btn-sm" onclick="changeWishlistQty('<%= product._id %>', -1)">-</button>
-                          <input class="quantity-input text-center " id="qty-<%= product._id %>" type="text" value="1" readonly style="width: 45px; padding-left: 1px;">
-                          <button class="btn btn-sm" onclick="changeWishlistQty('<%= product._id %>', 1)">+</button>
-                        </div>
-                      </td>
+                      
 
                       <!-- Add to Cart -->
                       <td class="text-center" data-title="Add to Cart">
@@ -117,20 +110,11 @@
     if (selected) selected.classList.add('btn-dark');
   }
 
-  function changeWishlistQty(productId, change) {
-    const input = document.getElementById(`qty-${productId}`);
-    let qty = parseInt(input.value) || 1;
-
-    qty += change;
-    if (qty < 1) qty = 1;
-    if (qty > 3) qty = 3;
-
-    input.value = qty;
-  }
+  
 
   function addToCartFromWishlist(productId) {
     const size = selectedSizes[productId];
-    const quantity = parseInt(document.getElementById(`qty-${productId}`).value);
+    const quantity = 1;
 
     if (!size) {
       Swal.fire("Please select size", "", "warning");
