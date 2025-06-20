@@ -82,6 +82,7 @@ const addProducts = async (req, res) => {
         category:foundCategory._id, 
         regularPrice,
         salePrice,
+        productOffer: Math.round(((regularPrice - salePrice) / regularPrice) * 100),
         createdOn:new Date(),
         
         sizes: {
@@ -157,12 +158,23 @@ const addProductOffer = async (req,res) => {
             return res.json({status:false, message:"This products category already has a category offer"})
         }
 
-        findProduct.salePrice = findProduct.salePrice - Math.floor(findProduct.regularPrice*(percentage/100))
-        findProduct.productOffer = parseInt(percentage);
+         const parsedPercentage = parseInt(percentage);
+
+        // ✅ Calculate new salePrice from regularPrice
+        const discountedPrice = findProduct.regularPrice - Math.floor(findProduct.regularPrice * (parsedPercentage / 100));
+
+        findProduct.salePrice = discountedPrice;
+        findProduct.productOffer = parsedPercentage;
+
         await findProduct.save();
-        findCategory.categoryOffer=0;
-        await findCategory.save();
-        res.json({status:true})
+
+        // ✅ Reset category offer if we are overriding it
+        if (findCategory && findCategory.categoryOffer !== 0) {
+          findCategory.categoryOffer = 0;
+          await findCategory.save();
+        }
+
+        return res.json({ status: true });
 
 
     } catch (error) {
@@ -176,8 +188,7 @@ const removeProductOffer = async (req,res) => {
         
         const {productId} = req.body;
         const findProduct = await Product.findOne({_id:productId});
-        const percentage = findProduct.productOffer;
-        findProduct.salePrice = findProduct.salePrice + Math.floor(findProduct.regularPrice*(percentage/100))
+        findProduct.salePrice = findProduct.regularPrice;
         findProduct.productOffer = 0;
         await findProduct.save();
         res.json({status:true})
@@ -265,12 +276,15 @@ const editProduct = async (req, res) => {
       M: parseInt(sizeM) || 0,
       L: parseInt(sizeL) || 0,
     };
+
+    const offerPercentage = Math.round(((regularPrice - salePrice) / regularPrice) * 100);
   
       const updateFields = {
         productName,
         description,
         regularPrice,
         salePrice,
+        productOffer: offerPercentage,
         sizes,
         color,
         brand,
