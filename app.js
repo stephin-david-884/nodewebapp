@@ -45,6 +45,12 @@ app.use('/uploads', express.static('public/uploads'));
 app.use("/",userRouter)
 app.use("/admin",adminRouter);
 
+// 404 Page Not Found Handler (for all unmatched routes)
+app.use((req, res, next) => {
+  res.status(404).render('pageNotFound'); // Not 'user/pageNotFound', just use views/pageNotFound.ejs
+});
+
+
 app.listen(process.env.PORT,()=>{
     console.log("Server is  running")
 })

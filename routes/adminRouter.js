@@ -101,4 +101,5 @@ router.get('/download-sales-report',adminAuth, adminController.downloadSalesRepo
 router.post('/filter-sales-table',adminAuth, adminController.getFilteredSalesReportTable);
 router.get('/sales-report', adminAuth, adminController.loadSalesReport)
 
+
 module.exports = router
