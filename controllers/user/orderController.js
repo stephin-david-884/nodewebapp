@@ -141,7 +141,7 @@ const getCheckoutPage = async (req, res) => {
     const totalPrice = grandTotal.length > 0 ? grandTotal[0].totalPrice : 0;
     const availableCoupons = await Coupon.find({
       $and: [
-        { createdOn: { $lt: today } },
+        { createdOn: { $lte: today } },
         { expireOn: { $gt: today } },
         { minimumPrice: { $lte: totalPrice } },
         {
