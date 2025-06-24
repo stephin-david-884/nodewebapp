@@ -198,6 +198,21 @@
 <!-- SweetAlert CDN -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get("ref");
+
+    if (refCode) {
+      const referralInput = document.getElementById("referral-code");
+      if (referralInput) {
+        referralInput.value = refCode;
+      }
+    }
+  });
+</script>
+
+
 <% if (typeof message !== 'undefined') { %>
 <script>
     Swal.fire({
