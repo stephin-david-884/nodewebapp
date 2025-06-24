@@ -141,12 +141,6 @@ const getCheckoutPage = async (req, res) => {
     const totalPrice = grandTotal.length > 0 ? grandTotal[0].totalPrice : 0;
     const availableCoupons = await Coupon.find({
   $and: [
-    {
-      $or: [
-        { createdOn: { $lt: today } },
-        { createdOn: { $exists: false } } // ✅ allow coupons without createdOn
-      ]
-    },
     { expireOn: { $gt: today } },
     { minimumPrice: { $lte: totalPrice } },
     {
@@ -158,6 +152,7 @@ const getCheckoutPage = async (req, res) => {
     { usedBy: { $ne: user } }
   ]
 });
+
 
     console.log("User ID:", user);
 console.log("Total Price:", totalPrice);
