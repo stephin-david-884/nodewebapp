@@ -20,6 +20,93 @@
     border-color: #222;
   }
 </style>
+<style>
+    @media (max-width: 768px) {
+  .shopping-summery {
+    border: none;
+  }
+
+  .shopping-summery thead {
+    display: none; /* Hide table header */
+  }
+
+  .shopping-summery tbody tr {
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  .shopping-summery td {
+    display: block;
+    padding: 8px 0;
+    border: none;
+  }
+
+  .image.product-thumbnail img {
+    width: 100px;
+    height: auto;
+    object-fit: contain;
+    border-radius: 5px;
+    margin-bottom: 10px;
+  }
+
+  .product-des h5 {
+    font-size: 16px;
+    margin: 0 0 6px 0;
+  }
+
+  .product-des p {
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+
+  .size-selector button {
+    margin-right: 5px;
+    margin-top: 5px;
+  }
+
+  .price,
+  .text-center,
+  .action {
+    font-size: 14px;
+  }
+
+  .quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .quantity-input {
+    width: 45px;
+    text-align: center;
+  }
+
+  .action a i {
+    font-size: 20px;
+    color: #dc3545;
+  }
+
+  .col-9,
+  .col-3 {
+    width: 100% !important;
+  }
+
+  .cart-totals {
+    margin-top: 20px;
+  }
+
+  .btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+</style>
 
 <main class="main">
     <div class="page-header breadcrumb-wrap">
