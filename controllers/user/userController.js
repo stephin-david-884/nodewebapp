@@ -30,13 +30,13 @@ const loadHomepage = async (req, res) => {
         const categories = await Category.find({ isListed: true });
 
         let productData = await Product.find({
-            isBlocked: false,
-            category: { $in: categories.map(category => category._id) },
-            quantity: { $gt: 0 }
-        });
+        isBlocked: false,
+        category: { $in: categories.map(category => category._id) },
+        quantity: { $gt: 0 }
+        })
+        .sort({ createdAt: -1 }) // sort by latest created
+        .limit(4);               // show only the 4 most recent products
 
-        productData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        productData = productData.slice(0, 4);
 
         if (userId) {
             const userData = await User.findById(userId);
