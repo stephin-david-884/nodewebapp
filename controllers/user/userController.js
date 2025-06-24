@@ -247,15 +247,22 @@ const verifyOtp = async (req, res) => {
       const passwordHash = await securePassword(user.password);
 
       // Save the new user
-      const saveUserData = new User({
+      const userDataToSave = {
         name: user.name,
         email: user.email,
         phone: user.phone,
         password: passwordHash,
-        referredBy: user.referralCode || null, // Save referral code if it was entered
-      });
-      
-      await saveUserData.save();
+        referredBy: user.referralCode || null,
+        };
+
+        // Do NOT set googleId unless it exists
+        if (user.googleId) {
+        userDataToSave.googleId = user.googleId;
+        }
+
+        const saveUserData = new User(userDataToSave);
+        await saveUserData.save();
+
 
       // ✅ If referral code exists, reward the referrer
       if (user.referralCode) {
