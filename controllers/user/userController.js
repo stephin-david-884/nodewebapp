@@ -8,6 +8,8 @@ const bcrypt = require("bcrypt");
 const { Session } = require("express-session");
 const env = require("dotenv").config();
 const Coupon = require("../../models/couponSchema")
+const Order = require("../../models/orderSchema")
+const mongoose = require("mongoose");
 
 const pageNotFound = async (req,res) => {
     try {
@@ -18,45 +20,59 @@ const pageNotFound = async (req,res) => {
 }
 
 const loadHomepage = async (req, res) => {
-    try {
-        const today = new Date().toISOString();
+  try {
+    const today = new Date().toISOString();
 
-        const findBanner = await Banner.find({
-            startDate: { $lt: new Date(today) },
-            endDate: { $gt: new Date(today) },
-        });
+    const findBanner = await Banner.find({
+      startDate: { $lt: new Date(today) },
+      endDate: { $gt: new Date(today) },
+    });
 
-        const userId = req.session.user;
-        const categories = await Category.find({ isListed: true });
+    const userId = req.session.user;
+    const categories = await Category.find({ isListed: true });
 
-        let productData = await Product.find({
-        isBlocked: false,
-        category: { $in: categories.map(category => category._id) },
-        quantity: { $gt: 0 }
-        })
-        .sort({ createdAt: -1 }) // sort by latest created
-        .limit(4);               // show only the 4 most recent products
+    // Latest Products (like “Editor’s Pick” or recent)
+    const latestProducts = await Product.find({
+      isBlocked: false,
+      category: { $in: categories.map(c => c._id) },
+    })
+      .sort({ createdAt: -1 })
+      .limit(4);
 
-
-        if (userId) {
-            const userData = await User.findById(userId);
-            res.render("home", {
-                user: userData,
-                products: productData,
-                banner: findBanner || []
-            });
-        } else {
-            res.render("home", {
-                user: null,
-                products: productData,
-                banner: findBanner || []
-            });
+    // 🔥 Aggregate Top Products from Orders
+    const topProductsData = await Order.aggregate([
+      { $unwind: "$product" },
+      { $match: { status: { $ne: "Cancelled" } } },
+      {
+        $group: {
+          _id: "$product._id", // Group by product ID
+          totalSold: { $sum: "$product.quantity" }
         }
+      },
+      { $sort: { totalSold: -1 } },
+      { $limit: 4 }
+    ]);
 
-    } catch (error) {
-        console.log("Home page not found", error);
-        res.status(500).send("Server error");
-    }
+    const topProductIds = topProductsData.map(p => p._id);
+
+    const topProducts = await Product.find({
+      _id: { $in: topProductIds },
+      isBlocked: false
+    });
+
+    const userData = userId ? await User.findById(userId) : null;
+
+    res.render("home", {
+      user: userData,
+      products: latestProducts,
+      topProducts,
+      banner: findBanner || []
+    });
+
+  } catch (error) {
+    console.error("Home page error:", error);
+    res.status(500).send("Server error");
+  }
 };
 
 
