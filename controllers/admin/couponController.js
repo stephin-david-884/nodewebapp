@@ -26,6 +26,7 @@ const createCoupon = async (req,res) => {
             expireOn:data.endDate,
             offerPrice:data.offerPrice,
             minimumPrice:data.minimumPrice,
+            isList: true,
         });
         await newCoupon.save();
         return res.redirect("/admin/coupon")
