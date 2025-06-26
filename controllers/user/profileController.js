@@ -64,8 +64,8 @@ const securePassword = async (password) => {
 const getForgotPassPage = async (req,res) => {
     try {
         
-        res.render("forgot-password")
-
+        res.render("forgot-password",{ message: null})
+        
     } catch (error) {
         res.redirect("pagenotfound")
     }
