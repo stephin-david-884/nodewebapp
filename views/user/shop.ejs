@@ -1,4 +1,21 @@
 <%- include("../../views/partials/user/header") %>
+<%
+  function buildQuery(newParams) {
+    const currentParams = {
+      category: selectedCategory,
+      brand: selectedBrand,
+      gt: priceRange?.gt,
+      lt: priceRange?.lt,
+      sortBy: sortBy,
+      query: query
+    };
+    return Object.entries({ ...currentParams, ...newParams })
+      .filter(([key, value]) => value !== null && value !== undefined && value !== '')
+      .map(([key, value]) => `${key}=${value}`)
+      .join('&');
+  }
+%>
+
 <style>
  .main-container {
    max-width: 1200px;
@@ -320,10 +337,32 @@
  <section class="shop-page container">
    <div class="shop-topbar">
      <div class="search-bar">
-       <form action="/search" method="POST" class="search-form">
-         <input type="text" name="query" placeholder="Search items..." class="search-input" />
-         <button type="submit" class="search-button">Search</button>
-       </form>
+       <form action="/shop" method="GET" class="search-form">
+      <input type="hidden" name="category" value="<%= selectedCategory || '' %>">
+      <input type="hidden" name="brand" value="<%= selectedBrand || '' %>">
+      <input type="hidden" name="gt" value="<%= priceRange?.gt || '' %>">
+      <input type="hidden" name="lt" value="<%= priceRange?.lt || '' %>">
+      <input type="hidden" name="sortBy" value="<%= sortBy || '' %>">
+      <input type="text" name="query" placeholder="Search items..." class="search-input" value="<%= query || '' %>"/>
+      <button type="submit" class="search-button">Search</button>
+    </form>
+     </div>
+     <div class="mt-2">
+      <form method="GET" id="sortForm" class="mb-3">
+            <input type="hidden" name="category" value="<%= selectedCategory || '' %>">
+            <input type="hidden" name="brand" value="<%= selectedBrand || '' %>">
+            <input type="hidden" name="gt" value="<%= priceRange?.gt || '' %>">
+            <input type="hidden" name="lt" value="<%= priceRange?.lt || '' %>">
+            <input type="hidden" name="query" value="<%= query || '' %>">
+
+            <select name="sortBy" onchange="document.getElementById('sortForm').submit()" >
+              <option value="">Sort By</option>
+              <option value="lowToHigh" <%= sortBy === 'lowToHigh' ? 'selected' : '' %>>Low to High</option>
+              <option value="highToLow" <%= sortBy === 'highToLow' ? 'selected' : '' %>>High to Low</option>
+              <option value="aToZ" <%= sortBy === 'aToZ' ? 'selected' : '' %>> Aa-Zz</option>
+              <option value="zToA" <%= sortBy === 'zToA' ? 'selected' : '' %>> Zz-Aa</option>
+            </select>
+          </form>
      </div>
    </div>
   
@@ -339,13 +378,14 @@
     <h5>Filters</h5>
     <button id="closeSidebarBtn" class="btn btn-sm btn-danger">X</button>
   </div>
+
        <div class="filter-section">
          <div class="filter-title">Categories</div>
          <div class="category-brand-container">
            <ul>
             <%for(let i=0;i<category.length;i++){%>
                <li class="filter-item">
-                 <a href="/filter?category=<%=category[i]._id%>"><%=category[i].name%></a>
+                 <a href="/shop?<%= buildQuery({ category: category[i]._id }) %>"><%= category[i].name %></a>
                </li>
             <%}%>   
            </ul>
@@ -360,7 +400,7 @@
            <ul>
             <%for(let i=0;i<brand.length;i++){%>
                <li class="filter-item">
-                 <a href="/filter?brand=<%=brand[i]._id%>"><%=brand[i].brandName%></a>
+                 <a href="/shop?<%= buildQuery({ brand: brand[i].brandName }) %>"><%= brand[i].brandName %></a>
                </li>
                <%}%>    
            </ul>
@@ -373,10 +413,10 @@
          <div class="filter-title">Filter by Price</div>
          <form id="price-filter-form">
            <div class="price-options">
-             <a href="/filterPrice?gt=0&lt=500"><button type="button" class="price-button">Under ₹499</button></a>
-             <a href="/filterPrice?gt=500&lt=1000"><button type="button" class="price-button">₹500 - ₹999</button></a>
-             <a href="/filterPrice?gt=1000&lt=1500"><button type="button" class="price-button">₹1000- ₹1499</button></a>
-             <a href="/filterPrice?gt=0&lt=100000"><button type="button" class="price-button">Above ₹1500</button></a>
+             <a href="/shop?<%= buildQuery({ gt: 0, lt: 500 }) %>"><button type="button" class="price-button">Under ₹499</button></a>
+              <a href="/shop?<%= buildQuery({ gt: 500, lt: 1000 }) %>"><button type="button" class="price-button">₹500 - ₹999</button></a>
+              <a href="/shop?<%= buildQuery({ gt: 1000, lt: 1500 }) %>"><button type="button" class="price-button">₹1000 - ₹1499</button></a>
+              <a href="/shop?<%= buildQuery({ gt: 1500, lt: 100000 }) %>"><button type="button" class="price-button">Above ₹1500</button></a>
            </div>
          </form>
        </div>
@@ -387,7 +427,8 @@
         </div>
       </div>
      </aside>
-
+     
+     
 
      <main class="product-grid">
   <% for (let i = 0; i < products.length; i++) { 
@@ -426,18 +467,16 @@
 <!-- Pagination -->
 <div class="pagination">
    <% if (currentPage > 1) { %>
-      <a class="btn" href="/shop?page=<%= currentPage - 1 %>">Prev</a>
-    <% } %>
+  <a class="btn" href="/shop?<%= buildQuery({ page: currentPage - 1 }) %>">Prev</a>
+  <% } %>
 
+  <% for (let i = 1; i <= totalPages; i++) { %>
+    <a class="btn <%= currentPage === i ? 'active' : '' %>" href="/shop?<%= buildQuery({ page: i }) %>"><%= i %></a>
+  <% } %>
 
-    <% for (let i = 1; i <= totalPages; i++) { %>
-      <a class="btn <%= currentPage === i ? 'active' : '' %>" href="/shop?page=<%= i %>"><%= i %></a>
-    <% } %>
-
-
-    <% if (currentPage < totalPages) { %>
-      <a class="btn" href="/shop?page=<%= currentPage + 1 %>">Next</a>
-    <% } %>
+  <% if (currentPage < totalPages) { %>
+    <a class="btn" href="/shop?<%= buildQuery({ page: currentPage + 1 }) %>">Next</a>
+  <% } %>
   </div>
   <div id="sidebarBackdrop" class="d-md-none"></div>
  </section>
