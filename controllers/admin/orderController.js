@@ -278,44 +278,74 @@ const approveReturn = async (req, res) => {
     const { productIndex } = req.body;
 
     const order = await Order.findOne({ orderId });
-    if (!order) {
-      return res.status(404).send('Order not found');
-    }
+    if (!order) return res.status(404).send('Order not found');
 
     const productItem = order.product[productIndex];
     if (!productItem || productItem.productStatus !== 'Return Requested') {
       return res.status(400).send('Invalid product or no return request found');
     }
 
-    // Update stock in Product model
+    // Step 1: Update stock
     await Product.findByIdAndUpdate(productItem._id, {
-      $inc: {
-        [`sizes.${productItem.size}`]: productItem.quantity,
-      },
+      $inc: { [`sizes.${productItem.size}`]: productItem.quantity }
     });
 
-    // Refund to wallet if payment was via wallet or razorpay
-    if (order.payment === 'wallet' || order.payment === 'razorpay') {
-      const user = await User.findById(order.userId);
-      if (user) {
-        const refundAmount = productItem.price * productItem.quantity;
-        user.wallet = (user.wallet || 0) + refundAmount;
-        user.history.push({
-          amount: refundAmount,
-          status: "credit",
-          date: new Date()
-        });
-        await user.save();
-      }
+    const user = await User.findById(order.userId);
+    if (!user) return res.status(404).send('User not found');
+
+    const itemTotal = productItem.price * productItem.quantity;
+    let refundAmount = itemTotal;
+
+    // Step 2: Apply proportional discount
+    if (order.discount > 0 && order.totalPrice > 0) {
+      const proportionalDiscount = (itemTotal / order.totalPrice) * order.discount;
+      refundAmount -= proportionalDiscount;
+      refundAmount = Math.round(refundAmount);
     }
 
-    // Update product status
+    // Step 3: Refund logic
+    if (order.payment === 'razorpay' || order.payment === 'wallet' || order.payment === 'cod') {
+      user.wallet += refundAmount;
+
+      user.history.push({
+        amount: refundAmount,
+        status: "credit",
+        date: new Date(),
+        description: `Refund for returned product (${productItem.name}) in order ${order.orderId}`
+      });
+
+      await user.save();
+    }
+
+    // Step 4: Mark product as returned
     order.product[productIndex].productStatus = 'Returned';
 
-    // If all products are returned or cancelled, update order status
+    // Step 5: Recalculate order total and discount
+    let newTotal = 0;
+    order.product.forEach(p => {
+      if (p.productStatus !== 'Returned' && p.productStatus !== 'Cancel') {
+        newTotal += p.price * p.quantity;
+      }
+    });
+
+    order.totalPrice = newTotal;
+
+    let newDiscount = 0;
+    if (order.discount > 0) {
+      const originalTotal = order.product.reduce((sum, p) => {
+        return sum + (p.price * p.quantity);
+      }, 0);
+      newDiscount = Math.round((newTotal / originalTotal) * order.discount);
+    }
+
+    order.discount = newDiscount;
+    order.finalAmount = newTotal - newDiscount;
+
+    // Step 6: Update order status if all returned/cancelled
     const allReturnedOrCancelled = order.product.every(p =>
-      p.productStatus === 'Returned' || p.productStatus === 'Cancelled'
+      p.productStatus === 'Returned' || p.productStatus === 'Cancel'
     );
+
     if (allReturnedOrCancelled) {
       order.status = 'Returned';
     }
@@ -324,10 +354,11 @@ const approveReturn = async (req, res) => {
 
     res.redirect(`/admin/order/${orderId}`);
   } catch (err) {
-    console.error(err);
+    console.error("Error in approveReturn:", err);
     res.status(500).send('Internal server error');
   }
 };
+
 
 
 const rejectReturn = async (req, res) => {
