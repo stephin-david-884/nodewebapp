@@ -62,12 +62,14 @@ const loadHomepage = async (req, res) => {
 
     const userData = userId ? await User.findById(userId) : null;
 
+    
     res.render("home", {
       user: userData,
       products: latestProducts,
       topProducts,
       banner: findBanner || []
     });
+    
 
   } catch (error) {
     console.error("Home page error:", error);

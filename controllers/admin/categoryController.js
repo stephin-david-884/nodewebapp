@@ -1,3 +1,4 @@
+const { name } = require("ejs");
 const Category = require("../../models/categorySchema")
 const Product = require("../../models/productSchema")
 
@@ -30,10 +31,11 @@ const categoryInfo = async (req,res) => {
 }
 
 const addCategory = async (req,res) => {
-    const {name,description} = req.body
+    
     try {
-        
-        const existingCategory = await Category.findOne({name});
+        const name = req.body.name.trim()
+        const description = req.body.description
+        const existingCategory = await Category.findOne({name:{$regex: new RegExp(`^${name}$`,'i')}});
         if(existingCategory){
             return res.status(400).json({error:"Category already exists"})
         }
@@ -132,56 +134,56 @@ const getUnlistCategory = async (req,res) => {
 }
 
 const getEditCategory = async (req, res) => {
-    try {
-        const id = req.query.id;
-        const category = await Category.findOne({ _id: id });
+  try {
+    const id = req.query.id;
 
-        // Extract the error query param (if exists) and pass to view
-        const error = req.query.error || null;
+    const category = await Category.findById(id);
 
-        res.render("edit-category", {
-            category: category,
-            error: error // ✅ This line is important
-        });
-    } catch (error) {
-        console.error("Error in getEditCategory:", error);
-        res.redirect("/pageerror");
-    }
+    const error = req.query.error || null;
+
+    res.render("edit-category", {
+      category,
+      error
+    });
+  } catch (error) {
+    console.error("Error in getEditCategory:", error);
+    res.redirect("/pageerror");
+  }
 };
 
 
 const editCategory = async (req, res) => {
-    try {
-        const error = req.query.error;
-        const id = req.params.id;
-        const { categoryName, description } = req.body;
+  try {
+    const id = req.params.id;
+    const { categoryName, description } = req.body;
 
-        // Check if another category (not the current one) has the same name
-        const existingCategory = await Category.findOne({
-            name: categoryName,
-            _id: { $ne: id }
-        });
+    // Case-insensitive match, excluding current category
+    const existingCategory = await Category.findOne({
+      name: { $regex: new RegExp(`^${categoryName}$`, 'i') },
+      _id: { $ne: id }
+    });
 
-        if (existingCategory) {
-            return res.status(400).json({ error: "Category already exists, please choose another name." });
-        }
-
-        const updateCategory = await Category.findByIdAndUpdate(id, {
-            name: categoryName,
-            description: description,
-        }, { new: true });
-
-        if (updateCategory) {
-            res.redirect("/admin/category");
-        } else {
-            res.status(404).json({ error: "Category not found" });
-        }
-
-    } catch (error) {
-        console.error("Error in editCategory:", error);
-        res.status(500).json({ error: "Internal Server Error" });
+    if (existingCategory) {
+      return res.redirect(`/admin/editCategory?id=${id}&error=Category name already exists`);
     }
+
+    const updateCategory = await Category.findByIdAndUpdate(id, {
+      name: categoryName,
+      description: description,
+    }, { new: true });
+
+    if (updateCategory) {
+      res.redirect("/admin/category");
+    } else {
+      res.status(404).send("Category not found");
+    }
+
+  } catch (error) {
+    console.error("Error in editCategory:", error);
+    res.status(500).send("Internal Server Error");
+  }
 };
+
 
 
 module.exports = {categoryInfo, addCategory, addCategoryOffer, removeCategoryOffer, getListCategory,getUnlistCategory,getEditCategory,editCategory}

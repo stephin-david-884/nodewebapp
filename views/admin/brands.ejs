@@ -28,6 +28,13 @@
   <div class="content-header">
     <div>
       <h2 class="content-title card-title">Brands</h2>
+      <% if (typeof error !== 'undefined') { %>
+        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+          <%= error %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      <% } %>
+
     </div>
   </div>
   <div class="card">
@@ -42,12 +49,13 @@
                 name="name"
                 placeholder="Type here"
                 class="form-control"
+                required
               />
             </div>
             <label for="product_name" class="form-label">Brand Image</label>
             <div class="input-upload">
               <img src="" alt=""/>
-              <input class="form-control border" name="image" type="file" />
+              <input class="form-control border" name="image" type="file" required/>
             </div>
             <div class="d-grid">
               <button class="btn btn-primary mt-20" type="submit">
