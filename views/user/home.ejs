@@ -110,6 +110,14 @@
 }
 </style>
 <!-- Hero Section -->
+ <div class="container">
+    <% if (user && user.isBlocked) { %>
+  <div class="alert alert-danger text-center" role="alert" style="margin-top: 10px;">
+    ⚠️ Your account has been blocked. You may contact the customer service.
+  </div>
+<% } %>
+
+ </div>
 <section class="hero-slider position-relative pt-10 pb-10">
   <div class="swiper-container w-60 mx-auto">
       <div class="swiper-wrapper">
