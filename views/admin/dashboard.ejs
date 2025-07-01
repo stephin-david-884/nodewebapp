@@ -197,10 +197,25 @@
   }
 
   function applyCustomRange() {
-    const startDate = document.getElementById("startDate").value;
-    const endDate = document.getElementById("endDate").value;
-    fetchDashboardData("custom", startDate, endDate);
+  const startDate = document.getElementById("startDate").value;
+  const endDate = document.getElementById("endDate").value;
+  const today = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
+
+  if (!startDate || !endDate) {
+    return Swal.fire("Missing Dates", "Please select both start and end dates", "warning");
   }
+
+  if (startDate > today || endDate > today) {
+    return Swal.fire("Invalid Date", "Future dates are not allowed", "warning");
+  }
+
+  if (endDate < startDate) {
+    return Swal.fire("Invalid Range", "End date cannot be earlier than start date", "warning");
+  }
+
+  fetchDashboardData("custom", startDate, endDate);
+}
+
 
   // On initial load
   fetchDashboardData("last7");

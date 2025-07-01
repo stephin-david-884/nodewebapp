@@ -18,9 +18,9 @@
       </select>
       <div id="reportCustomDate" style="display: none;">
         <label for="reportStart">From:</label>
-        <input type="date" id="reportStartDate" name="startDate">
+        <input type="date" id="reportStartDate" name="startDate" max="<%= new Date().toISOString().split('T')[0] %>">
         <label for="reportEnd">To:</label>
-        <input type="date" id="reportEndDate" name="endDate">
+        <input type="date" id="reportEndDate" name="endDate" max="<%= new Date().toISOString().split('T')[0] %>">
       </div>
       <button type="submit" class="btn btn-primary mt-2">Show Report</button>
     </form>
@@ -67,9 +67,9 @@
         
         <div id="customDate" style="display: none;">
           <label for="start">From:</label>
-          <input type="date" id="startDate" name="startDate">
+          <input type="date" id="startDate" name="startDate" max="<%= new Date().toISOString().split('T')[0] %>">
           <label for="end">To:</label>
-          <input type="date" id="endDate" name="endDate">
+          <input type="date" id="endDate" name="endDate" max="<%= new Date().toISOString().split('T')[0] %>">
         </div>
 
         <button type="submit" class="btn btn-primary mt-2">Filter</button>
@@ -87,6 +87,7 @@
 
 
 </section>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
   document.getElementById('range').addEventListener('change', function () {
@@ -95,6 +96,26 @@
 
   document.getElementById('salesFilterForm').addEventListener('submit', async function (e) {
   e.preventDefault();
+
+    const range = document.getElementById('range').value;
+  const startDate = document.getElementById('startDate').value;
+  const endDate = document.getElementById('endDate').value;
+  const today = new Date().toISOString().split("T")[0];
+
+  if (range === 'custom') {
+    if (!startDate || !endDate) {
+      return Swal.fire("Missing Dates", "Please select both start and end dates", "warning");
+    }
+
+    if (startDate > today || endDate > today) {
+      return Swal.fire("Invalid Date", "Future dates are not allowed", "warning");
+    }
+
+    if (endDate < startDate) {
+      return Swal.fire("Invalid Range", "End date cannot be earlier than start date", "warning");
+    }
+  }
+  
   const formData = new FormData(this);
   const response = await fetch('/admin/sales-report', {
     method: 'POST',
@@ -143,21 +164,50 @@
 });
 
 
-  document.getElementById('downloadPdf').addEventListener('click', () => {
+  document.getElementById('downloadPdf').addEventListener('click', (e) => {
   const range = document.getElementById('range').value;
-  const startDate = document.getElementById('startDate')?.value || '';
-  const endDate = document.getElementById('endDate')?.value || '';
+  const startDate = document.getElementById('startDate').value;
+  const endDate = document.getElementById('endDate').value;
+  const today = new Date().toISOString().split("T")[0];
+
+  if (range === 'custom') {
+    if (!startDate || !endDate) {
+      return Swal.fire("Missing Dates", "Please select both start and end dates", "warning");
+    }
+    if (startDate > today || endDate > today) {
+      return Swal.fire("Invalid Date", "Future dates are not allowed", "warning");
+    }
+    if (endDate < startDate) {
+      return Swal.fire("Invalid Range", "End date cannot be earlier than start date", "warning");
+    }
+  }
+
   const query = `?format=pdf&range=${range}&startDate=${startDate}&endDate=${endDate}`;
   window.location.href = '/admin/download-sales-report' + query;
 });
 
-document.getElementById('downloadExcel').addEventListener('click', () => {
+document.getElementById('downloadExcel').addEventListener('click', (e) => {
   const range = document.getElementById('range').value;
-  const startDate = document.getElementById('startDate')?.value || '';
-  const endDate = document.getElementById('endDate')?.value || '';
+  const startDate = document.getElementById('startDate').value;
+  const endDate = document.getElementById('endDate').value;
+  const today = new Date().toISOString().split("T")[0];
+
+  if (range === 'custom') {
+    if (!startDate || !endDate) {
+      return Swal.fire("Missing Dates", "Please select both start and end dates", "warning");
+    }
+    if (startDate > today || endDate > today) {
+      return Swal.fire("Invalid Date", "Future dates are not allowed", "warning");
+    }
+    if (endDate < startDate) {
+      return Swal.fire("Invalid Range", "End date cannot be earlier than start date", "warning");
+    }
+  }
+
   const query = `?format=excel&range=${range}&startDate=${startDate}&endDate=${endDate}`;
   window.location.href = '/admin/download-sales-report' + query;
 });
+
 
 </script>
 <script>
@@ -165,44 +215,61 @@ document.getElementById('downloadExcel').addEventListener('click', () => {
     document.getElementById('reportCustomDate').style.display = this.value === 'custom' ? 'block' : 'none';
   });
 
-  document.getElementById('reportFilterForm').addEventListener('submit', async function (e) {
-    e.preventDefault();
-    const range = document.getElementById('reportRange').value;
-    const startDate = document.getElementById('reportStartDate').value;
-    const endDate = document.getElementById('reportEndDate').value;
+ document.getElementById('reportFilterForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
 
-    const response = await fetch('/admin/filter-sales-table', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ range, startDate, endDate })
-    });
+  const range = document.getElementById('reportRange').value;
+  const startDate = document.getElementById('reportStartDate').value;
+  const endDate = document.getElementById('reportEndDate').value;
+  const today = new Date().toISOString().split("T")[0];
 
-    const data = await response.json();
-    const tbody = document.querySelector("#salesReportTable tbody");
-    tbody.innerHTML = "";
-
-    if (Array.isArray(data.orders)) {
-      data.orders.forEach((order, index) => {
-        const row = `
-          <tr>
-            <td>${index + 1}</td>
-            <td>${order.id.slice(-8)}</td>
-            <td>${order.user}</td>
-            <td>${new Date(order.date).toLocaleDateString()}</td>
-            <td>₹${order.total}</td>
-            <td>₹${order.couponDiscount}</td>
-            <td>₹${order.productDiscount}</td>
-            <td>₹${order.final}</td>
-            <td>${order.payment}</td>
-          </tr>`;
-        tbody.insertAdjacentHTML('beforeend', row);
-      });
-    } else {
-      tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">No orders found</td></tr>`;
+  if (range === 'custom') {
+    if (!startDate || !endDate) {
+      return Swal.fire("Missing Dates", "Please select both start and end dates", "warning");
     }
+
+    if (startDate > today || endDate > today) {
+      return Swal.fire("Invalid Date", "Future dates are not allowed", "warning");
+    }
+
+    if (endDate < startDate) {
+      return Swal.fire("Invalid Range", "End date cannot be earlier than start date", "warning");
+    }
+  }
+
+  const response = await fetch('/admin/filter-sales-table', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ range, startDate, endDate })
   });
+
+  const data = await response.json();
+  const tbody = document.querySelector("#salesReportTable tbody");
+  tbody.innerHTML = "";
+
+  if (Array.isArray(data.orders)) {
+    data.orders.forEach((order, index) => {
+      const row = `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${order.id.slice(-8)}</td>
+          <td>${order.user}</td>
+          <td>${new Date(order.date).toLocaleDateString()}</td>
+          <td>₹${order.total}</td>
+          <td>₹${order.couponDiscount}</td>
+          <td>₹${order.productDiscount}</td>
+          <td>₹${order.final}</td>
+          <td>${order.payment}</td>
+        </tr>`;
+      tbody.insertAdjacentHTML('beforeend', row);
+    });
+  } else {
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">No orders found</td></tr>`;
+  }
+});
+
 </script>
 
 <%- include("../../views/partials/admin/footer") %>

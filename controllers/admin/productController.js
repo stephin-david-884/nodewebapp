@@ -27,7 +27,7 @@ const addProducts = async (req, res) => {
       const { productName, description, brand, category, regularPrice, salePrice, color,sizeS, sizeM, sizeL} = req.body;
       
     
-      const productExists = await Product.findOne({ productName });
+      const productExists = await Product.findOne({ productName:{ $regex: new RegExp(`^${productName}$`, 'i') } });
       if (productExists) {
         return res.status(400).json({ success: false, message: "Product already exists, try another name" });
       }
