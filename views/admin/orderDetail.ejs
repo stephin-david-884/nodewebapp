@@ -169,10 +169,10 @@
                 <form action="/admin/order/<%= order.orderId %>/status" method="POST">
                   <label for="status">Status:</label>
                   <select name="status" id="status" onchange="this.form.submit()" class="form-select form-select-sm mt-1">
-                    <% ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].forEach((option) => { %>
+                    <% ['Pending', 'Processing', 'Shipped', 'Cancelled', 'Delivered' ].forEach((option) => { %>
                       <% 
-                        const currentIndex = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].indexOf(order.status);
-                        const optionIndex = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].indexOf(option);
+                        const currentIndex = ['Pending', 'Processing', 'Shipped', 'Cancelled', 'Delivered'].indexOf(order.status);
+                        const optionIndex = ['Pending', 'Processing', 'Shipped', 'Cancelled', 'Delivered'].indexOf(option);
                       %>
                       <% if (optionIndex >= currentIndex) { %>
                         <option value="<%= option %>" <%= order.status === option ? 'selected' : '' %>>

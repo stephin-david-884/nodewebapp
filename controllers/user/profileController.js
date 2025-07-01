@@ -299,7 +299,7 @@ const updateEmail = async (req,res) => {
 const changePassword = async (req,res) => {
     try {
         
-        res.render("change-password")
+        res.render("change-password", { error: null, message: null })
 
     } catch (error) {
         res.redirect("/pagenotfound")
@@ -307,38 +307,35 @@ const changePassword = async (req,res) => {
 }
 
 const changePasswordValid = async (req,res) => {
-    try {
-        const {email} = req.body;
-        const userExists = await User.findOne({email});
+     try {
+    const userId = req.session.user._id;
+    const { currentPassword, newPassword, confirmPassword } = req.body;
 
-        if(userExists){
-            const otp = generateOtp();
-            const emailSent = await sendVerificationEmail(email,otp);
-            if(emailSent){
-                req.session.userOtp = otp;
-                req.session.userData = req.body;
-                req.session.email = email;
-                res.render("change-password-otp");
-                console.log('OTP:',otp);
-                
-            }else{
-                res.json({
-                    success:false,
-                    message: "Failed to send OTP. Please try again",
-                })
-            }
-        }else{
-            res.render("change-password",{
-                message:"User with this email doesnot exist"
-            })
-        }
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) return res.render("change-password", { error: "User not found", message: null });
 
-
-    } catch (error) {
-        console.log("Error in change password",error);
-        
-        res.redirect("/pagenotfound")
+    // Check current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.render("change-password", { error: "Current password is incorrect", message: null });
     }
+
+    // Check new password match
+    if (newPassword !== confirmPassword) {
+      return res.render("change-password", { error: "New passwords do not match", message: null });
+    }
+
+    // Update password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    return res.redirect("/userProfile")
+  } catch (err) {
+    console.error("Password change error:", err);
+    res.render("change-password", { error: "An error occurred", message: null });
+  }
 }
 
 const verifyChangePassword = async (req,res) => {
