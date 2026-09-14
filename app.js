@@ -16,7 +16,7 @@ app.use(session({
     resave:false,
     saveUninitialized:true,
     cookie:{
-        secure:false,
+        secure:process.env.NODE_ENV === "production",
         httpOnly:true,
         maxAge:72*60*60*1000
     }
@@ -47,12 +47,12 @@ app.use("/admin",adminRouter);
 
 // 404 Page Not Found Handler (for all unmatched routes)
 app.use((req, res, next) => {
-  res.status(404).render('pageNotFound'); // Not 'user/pageNotFound', just use views/pageNotFound.ejs
+  res.status(404).render('pageNotFound'); 
 });
 
 
-app.listen(process.env.PORT,()=>{
-    console.log("Server is  running")
-})
+// app.listen(process.env.PORT,()=>{
+//     console.log("Server is  running")
+// })
 
 module.exports = app
