@@ -5,6 +5,8 @@ const User = require("../../models/userSchema")
 const fs = require("fs")
 const path = require("path")
 const sharp = require("sharp");
+const { uploadToCloudinary, uploadBase64ToCloudinary, deleteFromCloudinary } = require("../../config/cloudinary");
+
 
 
 const getProductAddPage = async (req,res) => {
@@ -33,36 +35,22 @@ const addProducts = async (req, res) => {
       }
   
      
-      const uploadDir = path.join(__dirname, "../../public/uploads/product-images");
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-  
      //Process images
+
       const imageFilenames = [];      
       for (let i = 1; i <= 4; i++) {
         const croppedImageData = req.body[`croppedImage${i}`];
       
         if (croppedImageData && croppedImageData.startsWith('data:image')) {
-          const base64Data = croppedImageData.replace(/^data:image\/\w+;base64,/, '');
-          const imageBuffer = Buffer.from(base64Data, 'base64');
-      
-          const filename = Date.now() + "-" + `cropped-image-${i}` + ".webp";
-          const filepath = path.join(uploadDir, filename);
-      
-          await sharp(imageBuffer)
-            .webp({ quality: 80 })
-            .toFile(filepath);
-      
-          imageFilenames.push(`uploads/product-images/${filename}`);
+          const cloudinaryResult = await uploadBase64ToCloudinary(croppedImageData, "products");
+          imageFilenames.push(cloudinaryResult.secure_url);
         }
       }
       
-  
-     
       if (imageFilenames.length < 4) {
         return res.status(400).json({ success: false, message: "Please upload all 4 product images" });
       }
+
   
       //Validate Category
       const foundCategory = await Category.findOne({ name: category });
@@ -301,21 +289,8 @@ const editProduct = async (req, res) => {
         const croppedImageData = req.body[`croppedImage${i}`];
         
         if (croppedImageData && croppedImageData.startsWith('data:image')) {
-          
-          const base64Data = croppedImageData.replace(/^data:image\/\w+;base64,/, '');
-          const imageBuffer = Buffer.from(base64Data, 'base64');
-          
-         
-          const filename = Date.now() + "-" + `cropped-image-${i}` + ".webp";
-          const filepath = path.join(__dirname, "../../public/uploads/product-images", filename);
-  
-        
-          await sharp(imageBuffer)
-            .webp({ quality: 80 })
-            .toFile(filepath);
-  
-          const imagePath = `uploads/product-images/${filename}`;
-  
+          const cloudinaryResult = await uploadBase64ToCloudinary(croppedImageData, "products");
+          const imagePath = cloudinaryResult.secure_url;
           
           if (product.productImage[i - 1]) {
             product.productImage[i - 1] = imagePath;
@@ -323,22 +298,16 @@ const editProduct = async (req, res) => {
             product.productImage.push(imagePath);
           }
         } else if (req.files && req.files[`image${i}`]) {
-          
           const file = req.files[`image${i}`][0];
-          const filename = Date.now() + "-" + file.originalname.replace(/\s/g, "") + ".webp";
-          const filepath = path.join(__dirname, "../../public/uploads/product-images", filename);
-  
-          await sharp(file.buffer)
-            .resize(800, 800, { fit: "inside", withoutEnlargement: true })
-            .webp({ quality: 80 })
-            .toFile(filepath);
-  
-          const imagePath = `uploads/product-images/${filename}`;
-  
-          if (product.productImage[i - 1]) {
-            product.productImage[i - 1] = imagePath;
-          } else {
-            product.productImage.push(imagePath);
+          if (file && file.buffer) {
+            const cloudinaryResult = await uploadToCloudinary(file.buffer, "products");
+            const imagePath = cloudinaryResult.secure_url;
+    
+            if (product.productImage[i - 1]) {
+              product.productImage[i - 1] = imagePath;
+            } else {
+              product.productImage.push(imagePath);
+            }
           }
         }
       }
@@ -363,17 +332,11 @@ const editProduct = async (req, res) => {
         return res.status(404).json({ status: false, message: "Product not found" });
       }
   
-      
       product.productImage.splice(imageIndex, 1);
       await product.save();
   
-      const imagePath = path.join(__dirname, "../../public", imageNameToServer);
-  
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-        console.log(`Image ${imageNameToServer} deleted successfully`);
-      } else {
-        console.log(`Image ${imageNameToServer} not found`);
+      if (imageNameToServer) {
+        await deleteFromCloudinary(imageNameToServer);
       }
   
       res.json({ status: true, message: "Image deleted successfully" });
@@ -382,6 +345,7 @@ const editProduct = async (req, res) => {
       res.status(500).json({ status: false, message: "An error occurred while deleting the image" });
     }
   };
+
 
 module.exports = {getProductAddPage, addProducts, getAllProducts, addProductOffer, 
     removeProductOffer, blockProduct, unblockProduct, getEditProduct, editProduct, deleteSingleImage}

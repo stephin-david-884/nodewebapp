@@ -235,7 +235,7 @@
                   <% order.product.forEach((item) => { %>
                     <tr>
                       <td class="text-center">
-                        <img src="/<%= item.image %>" class="img-xs" alt="Item" />
+                        <img src="<%= (item.image && item.image.startsWith('http')) ? item.image : '/' + item.image %>" class="img-xs" alt="Item" />
 
 
                       </td>

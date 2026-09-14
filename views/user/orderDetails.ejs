@@ -89,7 +89,7 @@
                                             <td class="text-center">
                                                 <a class="itemside" href="#">
                                                     <div class="left">
-                                                        <img src="<%= orders.product[i].image %>" style="height: 7rem; width: 7rem;" class="img-xs" alt="Item">
+                                                        <img src="<%= (orders.product[i].image && orders.product[i].image.startsWith('http')) ? orders.product[i].image : (orders.product[i].image && orders.product[i].image.startsWith('/') ? orders.product[i].image : '/' + orders.product[i].image) %>" style="height: 7rem; width: 7rem;" class="img-xs" alt="Item">
                                                     </div>
                                                 </a>
                                             </td>

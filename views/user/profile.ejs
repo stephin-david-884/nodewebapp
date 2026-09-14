@@ -1,536 +1,812 @@
 <%- include("../../views/partials/user/header") %>
+
 <style>
- .card-green {
-   background-color: #cdd0d2;
- }
- .main {
-   padding: 30px 0;
- }
-
-
- .dashboard-menu {
-   background-color: #1e1f1f;
-   border-radius: 10px;
-   padding: 15px;
-   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
- }
-
-
- .dashboard-menu .nav-link {
- font-weight: bold;
- color: #cbcdcb;
- box-shadow: 0 4px 10px rgba(227, 227, 227, 0.514), 0 4px 20px rgba(193, 194, 194, 0.2);
- transition: box-shadow 0.3s ease;
-}
-
-
-.dashboard-menu .nav-link:hover {
- color: #d6d6d6;
- box-shadow: 0 4px 15px rgba(222, 223, 221, 0.5), 0 6px 25px rgba(0, 191, 255, 0.4);
-}
-
-
- .card {
-   border-radius: 10px;
-   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-   margin-bottom: 20px;
- }
-
-
- .card-header {
-   background-color: #487379;
-   color: white;
-   border-radius: 10px 10px 0 0;
- }
-
-
- .btn-success {
-   background-color: #464646;
-   border-color: #413f3f;
- }
-
-
- .btn-success:hover {
-   background-color: #505150;
- }
-
-
- .form-group {
-   margin-bottom: 15px;
- }
-
-
- .required {
-   color: red;
- }
-
-
-  @media (max-width: 768px) {
-   .dashboard-menu {
-     padding: 10px;
-   }
-
-
-   .card {
-     margin-bottom: 15px;
-   }
- }
- .page-header.breadcrumb-wrap {
- background-color: #eee2e9;
- padding: 15px 0;
-}
-
-
-.breadcrumb {
- display: flex;
- align-items: center;
- font-family: 'Arial', sans-serif;
- font-size: 16px;
- color: #121311;
-}
-
-
-.breadcrumb a {
- color: #007bff;
- text-decoration: none;
- position: relative;
- margin: 0 5px;
-}
-
-
-.breadcrumb a:hover {
- color: #0056b3;
-}
-
-
-.breadcrumb span {
- margin: 0 5px;
- color: #999;
-}
-
-
-.breadcrumb a::after {
- content: '';
- position: absolute;
- width: 100%;
- height: 2px;
- background: #6e6e3a;
- left: 0;
- bottom: -2px;
- transform: scaleX(0);
- transition: transform 0.3s ease;
-}
-
-
-.breadcrumb a:hover::after {
- transform: scaleX(1);
-}
-.profile-pic-wrapper {
-    position: relative;
-    width: 130px;
-    height: 130px;
-    margin-bottom: 1rem;
+  :root {
+    --pf-primary: #111827;
+    --pf-accent: #2563eb;
+    --pf-accent-hover: #1d4ed8;
+    --pf-bg-subtle: #f8fafc;
+    --pf-card-bg: #ffffff;
+    --pf-border-color: #e2e8f0;
+    --pf-text-main: #1e293b;
+    --pf-text-muted: #64748b;
   }
 
-  .profile-pic-wrapper img {
-    width: 100%;
-    height: 100%;
+  .profile-page-wrapper {
+    background-color: var(--pf-bg-subtle);
+    min-height: 85vh;
+    padding-bottom: 3rem;
+  }
+
+  .profile-breadcrumb {
+    background: transparent;
+    padding: 1rem 0;
+    font-size: 0.9rem;
+  }
+
+  .profile-breadcrumb a {
+    color: var(--pf-text-muted);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .profile-breadcrumb a:hover {
+    color: var(--pf-accent);
+  }
+
+  .profile-breadcrumb span {
+    color: var(--pf-text-muted);
+    margin: 0 0.4rem;
+  }
+
+  /* Sidebar Navigation */
+  .profile-sidebar {
+    background: var(--pf-card-bg);
+    border-radius: 16px;
+    border: 1px solid var(--pf-border-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+  }
+
+  .profile-sidebar-header {
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #ffffff;
+    text-align: center;
+  }
+
+  .sidebar-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    margin: 0 auto 0.75rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  }
+
+  .profile-sidebar .nav-pills {
+    padding: 0.75rem;
+  }
+
+  .profile-sidebar .nav-link {
+    color: var(--pf-text-main);
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    margin-bottom: 0.35rem;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease-in-out;
+    border: 1px solid transparent;
+  }
+
+  .profile-sidebar .nav-link i {
+    width: 24px;
+    font-size: 1.1rem;
+    color: var(--pf-text-muted);
+    margin-right: 0.75rem;
+    transition: color 0.2s ease;
+  }
+
+  .profile-sidebar .nav-link:hover {
+    background-color: #f1f5f9;
+    color: var(--pf-primary);
+  }
+
+  .profile-sidebar .nav-link:hover i {
+    color: var(--pf-accent);
+  }
+
+  .profile-sidebar .nav-link.active {
+    background-color: #0f172a;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+  }
+
+  .profile-sidebar .nav-link.active i {
+    color: #38bdf8;
+  }
+
+  .profile-sidebar .nav-link.text-logout {
+    color: #ef4444;
+  }
+
+  .profile-sidebar .nav-link.text-logout i {
+    color: #ef4444;
+  }
+
+  .profile-sidebar .nav-link.text-logout:hover {
+    background-color: #fef2f2;
+    color: #dc2626;
+  }
+
+  /* Cards & Tab Content */
+  .profile-card {
+    background: var(--pf-card-bg);
+    border-radius: 16px;
+    border: 1px solid var(--pf-border-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+  }
+
+  .profile-card-header {
+    background: #ffffff;
+    border-bottom: 1px solid var(--pf-border-color);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .profile-card-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--pf-primary);
+    margin: 0;
+  }
+
+  .profile-card-body {
+    padding: 1.5rem;
+  }
+
+  /* Avatar & Profile Details */
+  .profile-avatar-wrapper {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    margin: 0 auto 1.25rem;
+  }
+
+  .profile-avatar-wrapper img {
+    width: 110px;
+    height: 110px;
     object-fit: cover;
     border-radius: 50%;
-    border: 3px solid #ddd;
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   }
 
-  .edit-icon {
+  .avatar-edit-badge {
     position: absolute;
-    bottom: 0;
-    right: 0;
-    background-color: white;
+    bottom: 4px;
+    right: 4px;
+    width: 34px;
+    height: 34px;
+    background-color: var(--pf-accent);
+    color: #ffffff;
     border-radius: 50%;
-    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+    transition: all 0.2s ease;
   }
 
-  .edit-icon:hover {
-    background-color: #e9ecef;
+  .avatar-edit-badge:hover {
+    background-color: var(--pf-accent-hover);
+    transform: scale(1.08);
   }
 
-  input[type="file"] {
+  input[type="file"]#profileImageInput {
     display: none;
+  }
+
+  .info-group-box {
+    background-color: #f8fafc;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    border: 1px solid #f1f5f9;
+  }
+
+  .info-group-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--pf-text-muted);
+    margin-bottom: 0.25rem;
+  }
+
+  .info-group-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--pf-text-main);
+    margin: 0;
+  }
+
+  /* Wallet Modern Design */
+  .digital-wallet-card {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+    border-radius: 18px;
+    padding: 2rem;
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
+  }
+
+  .digital-wallet-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, rgba(255, 255, 255, 0) 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .wallet-balance-amount {
+    font-size: 2.25rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #38bdf8;
+  }
+
+  .quick-chip-btn {
+    border: 1px solid var(--pf-border-color);
+    background: #ffffff;
+    color: var(--pf-text-main);
+    border-radius: 20px;
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .quick-chip-btn:hover {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+  }
+
+  /* Table Custom */
+  .table-custom {
+    vertical-align: middle;
+  }
+
+  .table-custom th {
+    background-color: #f8fafc;
+    color: var(--pf-text-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+    border-bottom: 1px solid var(--pf-border-color);
+    padding: 0.9rem 1rem;
+  }
+
+  .table-custom td {
+    padding: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  /* Status Badges */
+  .badge-status-pill {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: inline-block;
+  }
+
+  .badge-status-delivered { background-color: #dcfce7; color: #15803d; }
+  .badge-status-confirmed { background-color: #e0f2fe; color: #0369a1; }
+  .badge-status-pending   { background-color: #fef9c3; color: #a16207; }
+  .badge-status-cancelled { background-color: #fee2e2; color: #b91c1c; }
+  .badge-status-failed    { background-color: #f3f4f6; color: #4b5563; }
+
+  /* Address Card */
+  .address-card {
+    border: 1px solid var(--pf-border-color);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.2s ease;
+    height: 100%;
+    background: #ffffff;
+  }
+
+  .address-card:hover {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+    border-color: #cbd5e1;
+  }
+
+  /* Referral Section */
+  .referral-box {
+    background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+    border: 1px dashed #93c5fd;
+    border-radius: 14px;
+    padding: 1.75rem;
+  }
+
+  .referral-code-display {
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--pf-accent);
+    background: #ffffff;
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    display: inline-block;
+    border: 1px solid #bfdbfe;
   }
 </style>
 
+<main class="main profile-page-wrapper">
+  <!-- Breadcrumb Navigation -->
+  <div class="container">
+    <div class="profile-breadcrumb">
+      <a href="/"><i class="fas fa-home me-1"></i> Home</a>
+      <span>/</span>
+      <a href="/userProfile">Account</a>
+      <span>/</span>
+      <strong class="text-dark">User Profile</strong>
+    </div>
+  </div>
 
-<main class="main">
- <div class="page-header breadcrumb-wrap mb-3">
-   <div class="container">
-     <div class="breadcrumb">
-       <a href="#" rel="nofollow">Home</a>
-       <span></span> Profile <span></span> Account
-     </div>
-   </div>
- </div>
-  <section class="pt-10 pb-10">
-   <div class="container">
-     <div class="row">
-       <div class="col-lg-10 m-auto">
-         <div class="row">
-           <div class="col-md-4">
-             <div class="dashboard-menu">
-               <ul class="nav flex-column" role="tablist">
-                 <li class="nav-item">
-                   <a class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" href="#dashboard" role="tab" aria-controls="dashboard" aria-selected="false">
-                     <i class="fi-rs-settings-sliders mr-10"></i>Dashboard
-                   </a>
-                 </li>
-                 <li class="nav-item">
-                   <a class="nav-link" id="address-tab" data-bs-toggle="tab" href="#address" role="tab" aria-controls="address" aria-selected="true">
-                     <i class="fi-rs-marker mr-10"></i>My Address
-                   </a>
-                 </li>
-                 <li class="nav-item">
-                   <a class="nav-link" id="orders-tab" data-bs-toggle="tab" href="#orders" role="tab" aria-controls="orders" aria-selected="false">
-                     <i class="fi-rs-shopping-bag mr-10"></i>Orders
-                   </a>
-                 </li>
-                 <li class="nav-item">
-                   <a class="nav-link" id="track-orders-tab" data-bs-toggle="tab" href="#track-orders" role="tab" aria-controls="track-orders" aria-selected="false">
-                     <i class="fi-rs-shopping-cart-check mr-10"></i>Wallet Status
-                   </a>
-                 </li>
-                 <li class="nav-item">
-                   <a class="nav-link" id="track-orders-tab" data-bs-toggle="tab" href="#wallet-history" role="tab" aria-controls="track-orders" aria-selected="false">
-                     <i class="fi-rs-shopping-cart-check mr-10"></i>Wallet History
-                   </a>
-                 </li>
-                 <li class="nav-item">
-                   <a class="nav-link" id="track-orders-tab" data-bs-toggle="tab" href="#referal" role="tab" aria-controls="track-orders" aria-selected="false">
-                     <i class="fi-rs-shopping-cart-check mr-10"></i>Referals
-                   </a>
-                 </li>
-                 <li class="nav-item">
-                   <a class="nav-link" href="/logout">
-                     <i class="fi-rs-sign-out mr-10"></i>Logout
-                   </a>
-                 </li>
-               </ul>
-             </div>
-           </div>
-           <div class="col-md-8">
-             <div class="tab-content dashboard-content">
+  <section class="mt-2">
+    <div class="container">
+      <div class="row g-4">
+        
+        <!-- Left Sidebar Navigation Column -->
+        <div class="col-lg-3 col-md-4">
+          <div class="profile-sidebar">
+            <!-- Sidebar Top Brief User Info -->
+            <div class="profile-sidebar-header">
+              <img 
+                src="<%= user.profileImage ? (user.profileImage.startsWith('http') ? user.profileImage : '/uploads/profile/' + user.profileImage) : '/img/default-avatar.png' %>" 
+                alt="<%= user.name %>" 
+                class="sidebar-avatar d-block"
+              />
+              <h6 class="mb-0 fw-bold text-white"><%= user.name %></h6>
+              <small class="text-white-50" style="font-size: 0.78rem;"><%= user.email %></small>
+            </div>
 
+            <!-- Navigation Links -->
+            <ul class="nav nav-pills flex-column" id="profileTab" role="tablist">
+              <li class="nav-item" role="presentation">
+                <a class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" href="#dashboard" role="tab" aria-controls="dashboard" aria-selected="true">
+                  <i class="fas fa-user-circle"></i> Dashboard
+                </a>
+              </li>
+              <li class="nav-item" role="presentation">
+                <a class="nav-link" id="address-tab" data-bs-toggle="tab" href="#address" role="tab" aria-controls="address" aria-selected="false">
+                  <i class="fas fa-map-marker-alt"></i> My Addresses
+                </a>
+              </li>
+              <li class="nav-item" role="presentation">
+                <a class="nav-link" id="orders-tab" data-bs-toggle="tab" href="#orders" role="tab" aria-controls="orders" aria-selected="false">
+                  <i class="fas fa-shopping-bag"></i> My Orders
+                </a>
+              </li>
+              <li class="nav-item" role="presentation">
+                <a class="nav-link" id="wallet-tab" data-bs-toggle="tab" href="#track-orders" role="tab" aria-controls="track-orders" aria-selected="false">
+                  <i class="fas fa-wallet"></i> Wallet Status
+                </a>
+              </li>
+              <li class="nav-item" role="presentation">
+                <a class="nav-link" id="wallet-history-tab" data-bs-toggle="tab" href="#wallet-history" role="tab" aria-controls="wallet-history" aria-selected="false">
+                  <i class="fas fa-history"></i> Wallet History
+                </a>
+              </li>
+              <li class="nav-item" role="presentation">
+                <a class="nav-link" id="referral-tab" data-bs-toggle="tab" href="#referal" role="tab" aria-controls="referal" aria-selected="false">
+                  <i class="fas fa-gift"></i> Referrals
+                </a>
+              </li>
+              <li class="nav-item mt-2 pt-2 border-top">
+                <a class="nav-link text-logout" href="/logout">
+                  <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
 
-               <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
-                 <div class="card card-green">
-                   <div class="card-header">
-                     <h5 class="mb-0 text-center">User Profile</h5>
-                   </div>
-                   <!-- Profile Image with Pen Icon -->
-                    <div class="d-flex justify-content-center">
-                    <div class="profile-pic-wrapper">
-                      <img id="profileImagePreview" src="<%= user.profileImage ? ('/uploads/profile/' + user.profileImage) : '/img/default-avatar.png' %>" alt="Profile Picture">
-
-                      <label for="profileImageInput" class="edit-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                            class="bi bi-pencil-fill text-primary" viewBox="0 0 16 16">
-                          <path d="M12.854.146a.5.5 0 0 1 .11.637l-.057.07L5.207 8.5H4.5v-.707l7.7-7.7a.5.5 0 0 1 .653-.064zM11.207 2.5 13.5 4.793l-8 8H3v-2.5l8-8z"/>
-                        </svg>
-                      </label>
-                    </div>
-                    </div>
-                    <!-- File Input (hidden) -->
-                    <input type="file" name="profileImage" accept="image/*" id="profileImageInput">
-
-                    <!-- Success/Failure Alert -->
-                    <div id="uploadStatus" class="mt-2"></div>
-
-                   <div class="card-body text-center">
-                     <h5 class="card-title"><%=user.name%></h5>
-                     <p class="card-text">
-                       <strong>Phone:</strong><%=user.phone%>
-                     </p>
-                     <p class="card-text">
-                       <strong>Email:</strong><%=user.email%>
-                     </p>
-                     <a href="/change-email" class="btn btn-sm btn-success ml-2">Change Email</a>
-                     <a href="/change-password" class="btn btn-sm btn-success">Change Password</a>
-                   </div>
-                 </div>
-               </div>
-
-
-               <div
-                 class="tab-pane fade"
-                 id="address"
-                 role="tabpanel"
-                 aria-labelledby="address-tab"
-               >
-                 <div class="row">
-                  <%if(userAddress){%>
-                    <%userAddress.address.forEach((address)=>{%>
-                   <div class="col-lg-6">
-                     <div class="card mb-3 mb-lg-0">
-                       <div class="card-header">
-                         <h5 class="mb-0"><%=address.addressType%></h5>
-                       </div>
-
-
-                       <div class="card-body">
-                         <address>
-                          <%=address.name%><br>
-                          <%=address.city%><br>
-                          <%=address.landMark%><br>
-                          <%=address.state%><br>
-                         </address>
-                         <p><%=address.pincode%></p>
-                         <p><%=address.phone%></p>
-                         <p><%=address.altPhone%></p>
-                      
-                         <div class="d-flex justify-content-between">
-                           <a href="/editAddress?id=<%=address._id%>" class="btn-small">Edit</a>
-                           <a href="/deleteAddress?id=<%=address._id%>" class="btn-small" onclick="return confirm('Are you sure you want to delete this address?')">Delete</a>
-                         </div>
-                        
-                       </div>
-                     </div>
-                   </div>
-                   <%})%><%}else{%>
+        <!-- Right Content Column (ALL Tab Panes MUST stay inside .tab-content here) -->
+        <div class="col-lg-9 col-md-8">
+          <div class="tab-content" id="profileTabContent">
+            
+            <!-- TAB 1: DASHBOARD -->
+            <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+              <div class="profile-card">
+                <div class="profile-card-header">
+                  <h5 class="profile-card-title"><i class="fas fa-id-card text-primary me-2"></i>User Profile</h5>
+                  <span class="badge bg-primary-subtle text-primary fw-semibold px-3 py-2 rounded-pill">Active Account</span>
+                </div>
                 
-                   <div class="col-lg-6">
-                     <div class="card mb-3 mb-lg-0">
-                       <div class="card-header">
-                         <h5 class="mb-0"></h5>
-                       </div>
-                       <div class="card-body">
-                         <address>No address</address>
-                       </div>
-                     </div>
-                   </div>
-                   <%}%>
-              
-                   <div class="address-btn pt-5">
-                     <a href="/addAddress">
-                       <button class="btn btn-primary w-70">
-                         Add address
-                       </button>
-                     </a>
-                   </div>
-                 </div>
-               </div>
-
-
-               <div class="tab-pane fade" id="orders" role="tabpanel" aria-labelledby="orders-tab">
-                 <div class="card">
-                   <div class="card-header">
-                     <h5 class="mb-0">Your Orders</h5>
-                   </div>
-                   <div class="card-body">
-                     <div class="table-responsive">
-                       <table class="table">
-                        <thead>
-                          <tr>
-                            <th>Order ID</th>
-                            <th>Products</th>
-                            <th>Status</th>
-                            <th>Total</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <% if (orders && orders.length > 0) { %>
-                            <% orders.forEach(order => { %>
-                              <tr>
-                                <td>#<%= order._id.toString().slice(-6) %></td>
-
-                                <!-- Products Column -->
-                                <td>
-                                  <% order.product.forEach(item => { %>
-                                    <div class="d-flex align-items-center mb-2">
-                                      
-                                      <span><%= item._id?.name || item.name %> (x<%= item.quantity %>)</span>
-                                    </div>
-                                  <% }) %>
-
-
-                                </td>
-
-                                <td><%= order.status %></td>
-                                <td>₹<%= order.finalAmount %></td>
-                                <td>
-                                  <a href="/viewOrderDetails/<%= order._id %>" class="btn-small d-block">View Details</a>
-                                </td>
-                              </tr>
-                            <% }) %>
-                          <% } else { %>
-                            <tr>
-                              <td colspan="5" class="text-center">No orders found.</td>
-                            </tr>
-                          <% } %>
-                        </tbody>
-                      </table>
-                      <!-- Pagination -->
-                      <% if (totalPages > 1) { %>
-                        <div class="d-flex justify-content-center mt-3">
-                          <ul class="pagination">
-                            <% for (let i = 1; i <= totalPages; i++) { %>
-                              <li class="page-item <%= i === currentPage ? 'active' : '' %>">
-                                <a class="page-link" href="?page=<%= i %>#orders"><%= i %></a>
-                              </li>
-                            <% } %>
-                          </ul>
-                        </div>
-                      <% } %>
-
-
-
-                     </div>
-                   </div>
-                 </div>
-               </div>
-
-
-               <!-- Wallet Tab -->
-              <div class="tab-pane fade" id="track-orders" role="tabpanel" aria-labelledby="track-orders-tab">
-                <div class="card">
-                  <div class="card-header">
-                    <h5 class="mb-0">Wallet</h5>
+                <div class="profile-card-body text-center">
+                  <!-- Profile Picture Wrapper -->
+                  <div class="profile-avatar-wrapper">
+                    <img 
+                      id="profileImagePreview" 
+                      src="<%= user.profileImage ? (user.profileImage.startsWith('http') ? user.profileImage : '/uploads/profile/' + user.profileImage) : '/img/default-avatar.png' %>" 
+                      alt="<%= user.name %>"
+                    />
+                    <label for="profileImageInput" class="avatar-edit-badge" title="Change profile picture">
+                      <i class="fas fa-camera" style="font-size: 0.85rem;"></i>
+                    </label>
                   </div>
-                  <div class="card-body contact-from-area">
-                    <div class="row">
-                      <div class="col-lg-8 mx-auto text-center mt-4">
-                        <!-- Wallet Balance -->
-                        <h4 class="mb-4">Wallet Balance: ₹<%= user.wallet.toFixed(2) %></h4>
 
-                        <!-- Add Money Form -->
-                        <form id="addWalletForm">
-                          <div class="form-group">
-                            <label for="walletAmount" class="h5">Enter Amount to Add</label>
-                            <input type="number" min="1" id="walletAmount" class="form-control" placeholder="Enter amount in ₹" required />
-                          </div>
-                          <button type="button" class="btn btn-success mt-3" onclick="addMoneyToWallet()">Add Money</button>
-                        </form>
+                  <!-- Hidden Profile Upload Input -->
+                  <input type="file" name="profileImage" accept="image/*" id="profileImageInput">
+                  <div id="uploadStatus" class="mb-3"></div>
+
+                  <h4 class="fw-bold text-dark mb-1"><%= user.name %></h4>
+                  <p class="text-muted mb-4" style="font-size: 0.9rem;">Member of FLUXO</p>
+
+                  <!-- Information Grid -->
+                  <div class="row g-3 mb-4 text-start">
+                    <div class="col-md-6">
+                      <div class="info-group-box">
+                        <div class="info-group-label"><i class="fas fa-phone-alt me-1"></i> Phone Number</div>
+                        <p class="info-group-value"><%= user.phone || 'Not provided' %></p>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="info-group-box">
+                        <div class="info-group-label"><i class="fas fa-envelope me-1"></i> Email Address</div>
+                        <p class="info-group-value"><%= user.email %></p>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
 
-              <!-- Wallet History Tab -->
-              <div class="tab-pane fade" id="wallet-history" role="tabpanel" aria-labelledby="orders-tab">
-              <div class="card">
-                <div class="card-header">
-                  <h5 class="mb-0">Wallet History</h5>
-                </div>
-                <div class="card-body">
-                  <div class="table-responsive">
-                    <table class="table table-striped">
-                      <thead>
-                        <tr>
-                          <th>Date</th>
-                          <th>Transaction</th>
-                          <th>Amount (₹)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <% if (walletTransactions.length > 0) { %>
-                          <% walletTransactions.forEach(txn => { %>
-                            <tr>
-                              <td><%= new Date(txn.date).toLocaleString() %></td>
-                              <td><%= txn.status === 'credit' ? 'Credited to Wallet' : 'Debited for Order' %></td>
-                              <td class="<%= txn.status === 'credit' ? 'text-success' : 'text-danger' %>">
-                                ₹ <%= txn.amount.toFixed(2) %>
-                              </td>
-                            </tr>
-                          <% }) %>
-                        <% } else { %>
-                          <tr>
-                            <td colspan="3" class="text-center">No wallet transactions yet.</td>
-                          </tr>
-                        <% } %>
-                      </tbody>          
-                    </table>
-                  </div>
-                  <div class="d-flex justify-content-center mt-3">
-                    <div class="overflow-auto" style="max-width: 100%;">
-                      <ul class="pagination flex-wrap justify-content-center">
-                        <% 
-                          const visiblePages = 5;
-                          const startPage = Math.max(1, walletCurrentPage - Math.floor(visiblePages / 2));
-                          const endPage = Math.min(walletTotalPages, startPage + visiblePages - 1);
-                        %>
-
-                        <% if (walletCurrentPage > 1) { %>
-                          <li class="page-item">
-                            <a class="page-link" href="?walletPage=<%= walletCurrentPage - 1 %>#wallet-history">&laquo;</a>
-                          </li>
-                        <% } %>
-
-                        <% if (startPage > 1) { %>
-                          <li class="page-item">
-                            <a class="page-link" href="?walletPage=1#wallet-history">1</a>
-                          </li>
-                          <% if (startPage > 2) { %>
-                            <li class="page-item disabled"><span class="page-link">...</span></li>
-                          <% } %>
-                        <% } %>
-
-                        <% for (let i = startPage; i <= endPage; i++) { %>
-                          <li class="page-item <%= i === walletCurrentPage ? 'active' : '' %>">
-                            <a class="page-link" href="?walletPage=<%= i %>#wallet-history"><%= i %></a>
-                          </li>
-                        <% } %>
-
-                        <% if (endPage < walletTotalPages) { %>
-                          <% if (endPage < walletTotalPages - 1) { %>
-                            <li class="page-item disabled"><span class="page-link">...</span></li>
-                          <% } %>
-                          <li class="page-item">
-                            <a class="page-link" href="?walletPage=<%= walletTotalPages %>#wallet-history"><%= walletTotalPages %></a>
-                          </li>
-                        <% } %>
-
-                        <% if (walletCurrentPage < walletTotalPages) { %>
-                          <li class="page-item">
-                            <a class="page-link" href="?walletPage=<%= walletCurrentPage + 1 %>#wallet-history">&raquo;</a>
-                          </li>
-                        <% } %>
-                      </ul>
-                    </div>
+                  <!-- Quick Action Buttons -->
+                  <div class="d-flex flex-wrap gap-2 justify-content-center pt-2 border-top">
+                    <a href="/change-email" class="btn btn-outline-dark px-4 py-2 rounded-3 fw-semibold">
+                      <i class="fas fa-envelope-open me-2"></i> Change Email
+                    </a>
+                    <a href="/change-password" class="btn btn-outline-primary px-4 py-2 rounded-3 fw-semibold">
+                      <i class="fas fa-key me-2"></i> Change Password
+                    </a>
                   </div>
 
                 </div>
               </div>
             </div>
 
+            <!-- TAB 2: MY ADDRESSES -->
+            <div class="tab-pane fade" id="address" role="tabpanel" aria-labelledby="address-tab">
+              <div class="profile-card">
+                <div class="profile-card-header">
+                  <h5 class="profile-card-title"><i class="fas fa-map-marker-alt text-danger me-2"></i>My Saved Addresses</h5>
+                  <a href="/addAddress" class="btn btn-primary btn-sm rounded-3 px-3 py-2 fw-semibold">
+                    <i class="fas fa-plus me-1"></i> Add New Address
+                  </a>
+                </div>
 
+                <div class="profile-card-body">
+                  <div class="row g-3">
+                    <% if (userAddress && userAddress.address && userAddress.address.length > 0) { %>
+                      <% userAddress.address.forEach((address) => { %>
+                        <div class="col-lg-6">
+                          <div class="address-card d-flex flex-column justify-content-between">
+                            <div>
+                              <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-dark text-white rounded-pill px-3 py-1 text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                                  <%= address.addressType %>
+                                </span>
+                                <small class="text-muted"><i class="fas fa-phone-alt me-1"></i> <%= address.phone %></small>
+                              </div>
 
-               <div class="tab-pane fade" id="referal" role="tabpanel" aria-labelledby="track-orders-tab">
-                <div class="card">
-                  <div class="card-header">
-                    <h5 class="mb-0">Referral</h5>
-                  </div>
-                  <div class="card-body">
-                    <h6 class="mb-3">Refer your friends and earn rewards!</h6>
-                    <p>Your Referral Code: <strong><%= referralCode %></strong></p>
+                              <h6 class="fw-bold text-dark mb-1"><%= address.name %></h6>
+                              <p class="text-secondary small mb-2">
+                                <%= address.landMark %>, <%= address.city %><br>
+                                <%= address.state %> - <strong class="text-dark"><%= address.pincode %></strong>
+                              </p>
+                              <% if (address.altPhone) { %>
+                                <p class="text-muted small mb-0"><i class="fas fa-phone me-1"></i> Alt: <%= address.altPhone %></p>
+                              <% } %>
+                            </div>
 
-                    <div class="input-group">
-                      <input type="text" id="referralLink" class="form-control" readonly 
-                            value="https://fluxohub.xyz/signup?ref=<%= referralCode %>">
-                      <button class="btn btn-outline-secondary" type="button" onclick="copyReferralLink()">Copy</button>
-                    </div>
-                    <small class="text-muted">Share this link with your friends.</small>
+                            <div class="d-flex gap-2 mt-3 pt-2 border-top">
+                              <a href="/editAddress?id=<%= address._id %>" class="btn btn-sm btn-outline-primary flex-grow-1 rounded-2">
+                                <i class="fas fa-edit me-1"></i> Edit
+                              </a>
+                              <a href="/deleteAddress?id=<%= address._id %>" class="btn btn-sm btn-outline-danger flex-grow-1 rounded-2" onclick="return confirm('Are you sure you want to delete this address?')">
+                                <i class="fas fa-trash-alt me-1"></i> Delete
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      <% }) %>
+                    <% } else { %>
+                      <div class="col-12">
+                        <div class="text-center py-5 text-muted">
+                          <i class="fas fa-map-marked-alt fa-3x mb-3 text-secondary opacity-50"></i>
+                          <h6>No Saved Addresses Found</h6>
+                          <p class="small mb-3">Add a shipping address to speed up your checkout process.</p>
+                          <a href="/addAddress" class="btn btn-outline-primary btn-sm rounded-pill px-4">Add Address Now</a>
+                        </div>
+                      </div>
+                    <% } %>
                   </div>
                 </div>
               </div>
+            </div>
 
-       </div>
-     </div>
-   </div>
- </section>
+            <!-- TAB 3: ORDERS -->
+            <div class="tab-pane fade" id="orders" role="tabpanel" aria-labelledby="orders-tab">
+              <div class="profile-card">
+                <div class="profile-card-header">
+                  <h5 class="profile-card-title"><i class="fas fa-shopping-bag text-warning me-2"></i>My Orders</h5>
+                </div>
+
+                <div class="profile-card-body p-0">
+                  <div class="table-responsive">
+                    <table class="table table-custom mb-0">
+                      <thead>
+                        <tr>
+                          <th>Order ID</th>
+                          <th>Items</th>
+                          <th>Status</th>
+                          <th>Total</th>
+                          <th class="text-end">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% if (orders && orders.length > 0) { %>
+                          <% orders.forEach(order => { %>
+                            <tr>
+                              <td>
+                                <strong class="text-dark">#<%= order._id.toString().slice(-6) %></strong>
+                              </td>
+                              <td>
+                                <% if (order.product && order.product.length > 0) { %>
+                                  <% order.product.forEach(item => { %>
+                                    <div class="text-truncate" style="max-width: 220px;" title="<%= item._id?.name || item.name %>">
+                                      <small class="fw-semibold text-dark">• <%= item._id?.name || item.name %></small>
+                                      <span class="text-muted small">(x<%= item.quantity %>)</span>
+                                    </div>
+                                  <% }) %>
+                                <% } else { %>
+                                  <span class="text-muted small">N/A</span>
+                                <% } %>
+                              </td>
+                              <td>
+                                <% 
+                                  let statusClass = 'badge-status-pending';
+                                  if (order.status === 'Delivered') statusClass = 'badge-status-delivered';
+                                  else if (order.status === 'Confirmed') statusClass = 'badge-status-confirmed';
+                                  else if (order.status === 'Cancelled' || order.status === 'Cancel') statusClass = 'badge-status-cancelled';
+                                  else if (order.status === 'Failed') statusClass = 'badge-status-failed';
+                                %>
+                                <span class="badge-status-pill <%= statusClass %>">
+                                  <%= order.status %>
+                                </span>
+                              </td>
+                              <td class="fw-bold text-dark">
+                                ₹<%= order.finalAmount %>
+                              </td>
+                              <td class="text-end">
+                                <a href="/viewOrderDetails/<%= order._id %>" class="btn btn-sm btn-dark rounded-2 px-3">
+                                  Details
+                                </a>
+                              </td>
+                            </tr>
+                          <% }) %>
+                        <% } else { %>
+                          <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                              <i class="fas fa-box-open fa-2x mb-2 opacity-50"></i>
+                              <p class="mb-0">No orders placed yet.</p>
+                            </td>
+                          </tr>
+                        <% } %>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- Orders Pagination -->
+                  <% if (totalPages > 1) { %>
+                    <div class="d-flex justify-content-center p-3 border-top">
+                      <nav aria-label="Orders pagination">
+                        <ul class="pagination pagination-sm mb-0">
+                          <% for (let i = 1; i <= totalPages; i++) { %>
+                            <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                              <a class="page-link" href="?page=<%= i %>#orders"><%= i %></a>
+                            </li>
+                          <% } %>
+                        </ul>
+                      </nav>
+                    </div>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 4: WALLET STATUS -->
+            <div class="tab-pane fade" id="track-orders" role="tabpanel" aria-labelledby="wallet-tab">
+              <div class="profile-card">
+                <div class="profile-card-header">
+                  <h5 class="profile-card-title"><i class="fas fa-wallet text-success me-2"></i>Wallet Status</h5>
+                </div>
+
+                <div class="profile-card-body">
+                  <!-- Digital Wallet Card Header -->
+                  <div class="digital-wallet-card mb-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                      <div>
+                        <small class="text-white-50 text-uppercase fw-semibold" style="letter-spacing: 1px; font-size: 0.75rem;">Total Available Balance</small>
+                        <div class="wallet-balance-amount mt-1">₹<%= user.wallet ? user.wallet.toFixed(2) : '0.00' %></div>
+                      </div>
+                      <div class="bg-white bg-opacity-10 p-3 rounded-3 text-white">
+                        <i class="fas fa-wallet fa-2x"></i>
+                      </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center text-white-50 small border-top border-white border-opacity-10 pt-3">
+                      <span><i class="fas fa-user-circle me-1"></i> <%= user.name %></span>
+                      <span><i class="fas fa-shield-alt me-1"></i> Secure Digital Wallet</span>
+                    </div>
+                  </div>
+
+                  <!-- Add Funds Box -->
+                  <div class="bg-light p-4 rounded-3 border">
+                    <h6 class="fw-bold text-dark mb-3"><i class="fas fa-plus-circle text-primary me-2"></i>Add Funds to Wallet</h6>
+                    
+                    <!-- Quick Amount Chips -->
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                      <span class="text-muted small align-self-center me-1">Quick Select:</span>
+                      <button type="button" class="quick-chip-btn" onclick="setQuickAmount(500)">+ ₹500</button>
+                      <button type="button" class="quick-chip-btn" onclick="setQuickAmount(1000)">+ ₹1,000</button>
+                      <button type="button" class="quick-chip-btn" onclick="setQuickAmount(2000)">+ ₹2,000</button>
+                      <button type="button" class="quick-chip-btn" onclick="setQuickAmount(5000)">+ ₹5,000</button>
+                    </div>
+
+                    <form id="addWalletForm" onsubmit="event.preventDefault(); addMoneyToWallet();">
+                      <div class="row g-2 align-items-center">
+                        <div class="col-sm-8">
+                          <div class="input-group">
+                            <span class="input-group-text bg-white text-dark fw-bold">₹</span>
+                            <input 
+                              type="number" 
+                              min="1" 
+                              id="walletAmount" 
+                              class="form-control form-control-lg fs-6" 
+                              placeholder="Enter amount (e.g. 500)" 
+                              required 
+                            />
+                          </div>
+                        </div>
+                        <div class="col-sm-4">
+                          <button type="button" class="btn btn-success btn-lg w-100 fs-6 fw-bold rounded-3" onclick="addMoneyToWallet()">
+                            <i class="fas fa-lock me-1"></i> Add Money
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 5: WALLET HISTORY -->
+            <div class="tab-pane fade" id="wallet-history" role="tabpanel" aria-labelledby="wallet-history-tab">
+              <div class="profile-card">
+                <div class="profile-card-header">
+                  <h5 class="profile-card-title"><i class="fas fa-history text-info me-2"></i>Wallet History</h5>
+                </div>
+
+                <div class="profile-card-body p-0">
+                  <div class="table-responsive">
+                    <table class="table table-custom mb-0">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Transaction Description</th>
+                          <th class="text-end">Amount (₹)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% if (walletTransactions && walletTransactions.length > 0) { %>
+                          <% walletTransactions.forEach(txn => { %>
+                            <tr>
+                              <td class="text-muted small">
+                                <i class="far fa-clock me-1"></i> <%= new Date(txn.date).toLocaleString() %>
+                              </td>
+                              <td>
+                                <% if (txn.status === 'credit') { %>
+                                  <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1 me-1"><i class="fas fa-arrow-down-left"></i> Credit</span>
+                                  <span class="fw-semibold text-dark">Added to Wallet</span>
+                                <% } else { %>
+                                  <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-1 me-1"><i class="fas fa-arrow-up-right"></i> Debit</span>
+                                  <span class="fw-semibold text-dark">Used for Order</span>
+                                <% } %>
+                              </td>
+                              <td class="text-end fw-bold <%= txn.status === 'credit' ? 'text-success' : 'text-danger' %>">
+                                <%= txn.status === 'credit' ? '+' : '-' %> ₹<%= txn.amount.toFixed(2) %>
+                              </td>
+                            </tr>
+                          <% }) %>
+                        <% } else { %>
+                          <tr>
+                            <td colspan="3" class="text-center py-5 text-muted">
+                              <i class="fas fa-receipt fa-2x mb-2 opacity-50"></i>
+                              <p class="mb-0">No wallet transactions found.</p>
+                            </td>
+                          </tr>
+                        <% } %>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- Wallet History Pagination -->
+                  <% if (walletTotalPages > 1) { %>
+                    <div class="d-flex justify-content-center p-3 border-top">
+                      <nav aria-label="Wallet history pagination">
+                        <ul class="pagination pagination-sm mb-0">
+                          <% for (let i = 1; i <= walletTotalPages; i++) { %>
+                            <li class="page-item <%= i === walletCurrentPage ? 'active' : '' %>">
+                              <a class="page-link" href="?walletPage=<%= i %>#wallet-history"><%= i %></a>
+                            </li>
+                          <% } %>
+                        </ul>
+                      </nav>
+                    </div>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 6: REFERRALS -->
+            <div class="tab-pane fade" id="referal" role="tabpanel" aria-labelledby="referral-tab">
+              <div class="profile-card">
+                <div class="profile-card-header">
+                  <h5 class="profile-card-title"><i class="fas fa-gift text-warning me-2"></i>Referral & Rewards</h5>
+                </div>
+
+                <div class="profile-card-body">
+                  <div class="referral-box text-center mb-4">
+                    <i class="fas fa-gift text-warning fa-3x mb-3"></i>
+                    <h5 class="fw-bold text-dark mb-1">Invite Friends & Earn Wallet Rewards!</h5>
+                    <p class="text-muted small mb-3">Share your referral link with friends. When they sign up using your link, both of you earn rewards.</p>
+                    
+                    <div class="mb-3">
+                      <small class="text-muted d-block uppercase fw-semibold mb-1" style="font-size: 0.75rem;">Your Referral Code</small>
+                      <span class="referral-code-display"><%= referralCode || 'N/A' %></span>
+                    </div>
+
+                    <div class="row justify-content-center">
+                      <div class="col-md-8">
+                        <div class="input-group">
+                          <input 
+                            type="text" 
+                            id="referralLink" 
+                            class="form-control text-center bg-white" 
+                            readonly 
+                            value="https://fluxo-mu-smoky.vercel.app/signup?ref=<%= referralCode %>" 
+                          />
+                          <button class="btn btn-primary px-4 fw-semibold" type="button" onclick="copyReferralLink()">
+                            <i class="fas fa-copy me-1"></i> Copy
+                          </button>
+                        </div>
+                        <small id="copyMsg" class="text-success small fw-semibold mt-2 d-none">Link copied to clipboard!</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div> <!-- End of .tab-content -->
+        </div> <!-- End of Right Content Column -->
+
+      </div> <!-- End of .row -->
+    </div> <!-- End of .container -->
+  </section>
 </main>
+
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
+  // Profile Picture Upload Handler
   document.getElementById("profileImageInput").addEventListener("change", async function () {
     const file = this.files[0];
     if (!file) return;
@@ -538,8 +814,8 @@
     const formData = new FormData();
     formData.append("profileImage", file);
 
-    // Optional: Show uploading message
-    document.getElementById("uploadStatus").innerHTML = `<span class="text-info">Uploading...</span>`;
+    const statusEl = document.getElementById("uploadStatus");
+    statusEl.innerHTML = `<span class="badge bg-info-subtle text-info p-2"><i class="fas fa-spinner fa-spin me-1"></i> Uploading...</span>`;
 
     try {
       const res = await fetch("/upload-profile-pic", {
@@ -550,20 +826,25 @@
       const data = await res.json();
 
       if (res.ok) {
-        document.getElementById("uploadStatus").innerHTML = `<span class="text-success">Uploaded successfully!</span>`;
-        document.getElementById("profileImagePreview").src = `/uploads/profile/${data.filename}?t=${new Date().getTime()}`;
+        statusEl.innerHTML = `<span class="badge bg-success-subtle text-success p-2"><i class="fas fa-check-circle me-1"></i> Uploaded successfully!</span>`;
+        const newSrc = (data.filename && data.filename.startsWith("http")) ? data.filename : (data.imageUrl || `/uploads/profile/${data.filename}?t=${new Date().getTime()}`);
+        document.getElementById("profileImagePreview").src = newSrc;
+        const sidebarAvatar = document.querySelector(".sidebar-avatar");
+        if (sidebarAvatar) sidebarAvatar.src = newSrc;
       } else {
-        document.getElementById("uploadStatus").innerHTML = `<span class="text-danger">${data.error || "Upload failed"}</span>`;
+        statusEl.innerHTML = `<span class="badge bg-danger-subtle text-danger p-2"><i class="fas fa-exclamation-circle me-1"></i> ${data.error || "Upload failed"}</span>`;
       }
     } catch (err) {
-      document.getElementById("uploadStatus").innerHTML = `<span class="text-danger">Something went wrong</span>`;
+      statusEl.innerHTML = `<span class="badge bg-danger-subtle text-danger p-2"><i class="fas fa-exclamation-circle me-1"></i> Something went wrong</span>`;
     }
   });
-</script>
 
+  // Quick Amount Helper for Wallet
+  function setQuickAmount(amt) {
+    document.getElementById("walletAmount").value = amt;
+  }
 
-
-<script>
+  // Add Money to Wallet Handler
   function addMoneyToWallet() {
     const amount = parseFloat(document.getElementById("walletAmount").value);
     if (!amount || amount <= 0) {
@@ -571,21 +852,19 @@
       return;
     }
 
-    // Step 1: Ask server to create Razorpay order
     $.ajax({
       url: '/createWalletOrder',
       method: 'POST',
       data: { amount },
       success: function (response) {
         const options = {
-          key: "rzp_test_TbndyG3bjwhuoK", 
+          key: "rzp_test_TbndyG3bjwhuoK",
           amount: response.amount,
           currency: "INR",
           name: "Wallet Top-up",
-          description: "Add money to wallet",
+          description: "Add money to FLUXO wallet",
           order_id: response.orderId,
           handler: function (payment) {
-            // Step 2: On payment success, confirm to backend
             $.ajax({
               url: '/verifyWalletPayment',
               method: 'POST',
@@ -596,7 +875,11 @@
               },
               success: function (res) {
                 if (res.status) {
-                  Swal.fire("Success", "Amount added to wallet!", "success").then(() => {
+                  Swal.fire({
+                    title: "Success",
+                    text: "Amount added to wallet!",
+                    icon: "success"
+                  }).then(() => {
                     location.reload();
                   });
                 } else {
@@ -606,83 +889,95 @@
             });
           },
           prefill: {
-            name: "Customer Name",
-            email: "customer@example.com",
-            contact: "9999999999"
+            name: "<%= user.name %>",
+            email: "<%= user.email %>",
+            contact: "<%= user.phone %>"
           },
           theme: {
-            color: "#3399cc"
+            color: "#0f172a"
           }
         };
 
         const rzp = new Razorpay(options);
         rzp.open();
+      },
+      error: function () {
+        Swal.fire("Error", "Could not initialize payment. Try again.", "error");
       }
     });
   }
-</script>
-<script>
-  // Maintain the active tab after reload using hash
-  const hash = window.location.hash;
-  if (hash) {
-    const tabTrigger = document.querySelector(`a[href="${hash}"]`);
-    if (tabTrigger) {
-      new bootstrap.Tab(tabTrigger).show();
-    }
-  }
-</script>
-<script>
+
+  // Copy Referral Link Handler
   function copyReferralLink() {
     const linkInput = document.getElementById("referralLink");
     linkInput.select();
-    document.execCommand("copy");
-    alert("Referral link copied to clipboard!");
+    linkInput.setSelectionRange(0, 99999);
+    
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(linkInput.value).then(() => {
+        showCopyMsg();
+      }).catch(() => {
+        document.execCommand("copy");
+        showCopyMsg();
+      });
+    } else {
+      document.execCommand("copy");
+      showCopyMsg();
+    }
   }
-</script>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    // Check if there's a hash in the URL
+
+  function showCopyMsg() {
+    const copyMsg = document.getElementById("copyMsg");
+    if (copyMsg) {
+      copyMsg.classList.remove("d-none");
+      setTimeout(() => copyMsg.classList.add("d-none"), 3000);
+    }
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: 'Referral link copied to clipboard!',
+      showConfirmButton: false,
+      timer: 2000
+    });
+  }
+
+  // Tab Hash Synchronizer Function
+  function activateTabFromHash() {
     const hash = window.location.hash;
     if (hash) {
-      const triggerEl = document.querySelector(`a[href="${hash}"]`);
-      if (triggerEl) {
-        new bootstrap.Tab(triggerEl).show();
+      const tabTrigger = document.querySelector(`a[href="${hash}"]`);
+      if (tabTrigger) {
+        if (typeof bootstrap !== 'undefined' && bootstrap.Tab) {
+          const tab = new bootstrap.Tab(tabTrigger);
+          tab.show();
+        } else if (typeof $ !== 'undefined' && $.fn.tab) {
+          $(tabTrigger).tab('show');
+        } else {
+          document.querySelectorAll('.profile-sidebar .nav-link').forEach(el => el.classList.remove('active'));
+          document.querySelectorAll('.tab-content .tab-pane').forEach(el => el.classList.remove('show', 'active'));
+          tabTrigger.classList.add('active');
+          const targetPane = document.querySelector(hash);
+          if (targetPane) targetPane.classList.add('show', 'active');
+        }
       }
     }
+  }
 
-    // Save clicked tab in URL hash
-    const tabLinks = document.querySelectorAll('a[data-bs-toggle="tab"]');
+  document.addEventListener('DOMContentLoaded', function () {
+    activateTabFromHash();
+
+    // Listen for tab clicks to sync URL hash
+    const tabLinks = document.querySelectorAll('a[data-bs-toggle="tab"], a[data-toggle="tab"]');
     tabLinks.forEach((link) => {
-      link.addEventListener('shown.bs.tab', function (e) {
-        history.replaceState(null, null, e.target.getAttribute('href'));
+      link.addEventListener('click', function (e) {
+        const href = this.getAttribute('href');
+        if (href && href.startsWith('#')) {
+          history.replaceState(null, null, href);
+        }
       });
     });
   });
 </script>
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const urlParams = new URLSearchParams(window.location.search);
-    const pageParam = urlParams.get("page");
-
-    const hash = window.location.hash;
-
-    // Check if we're on an order-related pagination (like ?page=2#orders)
-    if ((pageParam && hash === "#orders") || hash === "#orders") {
-      const ordersTab = document.querySelector('#orders-tab');
-      const ordersPane = document.querySelector('#orders');
-
-      if (ordersTab) {
-        const tab = new bootstrap.Tab(ordersTab);
-        tab.show();
-
-        if (ordersPane) {
-          ordersPane.scrollIntoView({ behavior: "smooth" });
-        }
-      }
-    }
-  });
-</script>
-
-
 
 <%- include("../../views/partials/user/footer") %>

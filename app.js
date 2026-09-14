@@ -68,21 +68,6 @@ app.use((req, res, next) => {
         const storeName = req.sessionStore && req.sessionStore.constructor
             ? req.sessionStore.constructor.name
             : "unknown";
-
-        console.log("[session-debug]", {
-            env: process.env.NODE_ENV || "undefined",
-            path: req.path,
-            method: req.method,
-            secure: req.secure,
-            hasSession: Boolean(req.session),
-            hasSessionId: Boolean(req.sessionID),
-            hasSessionUser: Boolean(req.session && req.session.user),
-            hasSessionOtp: Boolean(req.session && req.session.userOtp),
-            hasSessionUserData: Boolean(req.session && req.session.userData),
-            hasCookieHeader: Boolean(req.headers.cookie),
-            mongoReadyState: mongoose.connection.readyState,
-            store: storeName
-        });
     }
 
     next();

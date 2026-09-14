@@ -84,7 +84,8 @@
                         border-radius: 50%;
                         overflow: hidden;
                       ">
-                          <img src="/uploads/re-image/<%=brand.brandImage[0]%>" alt="<%=brand.brandName%>"
+                          <img src="<%= (brand.brandImage && brand.brandImage[0] && brand.brandImage[0].startsWith('http')) ? brand.brandImage[0] : '/uploads/re-image/' + (brand.brandImage ? brand.brandImage[0] : '') %>" alt="<%=brand.brandName%>"
+
                             class="img-fluid rounded-circle" style="width: 100%; height: auto" />
                         </div>
                       </td>

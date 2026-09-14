@@ -1,5 +1,6 @@
 const Brand = require("../../models/brandSchema");
-const Product = require("../../models/productSchema")
+const Product = require("../../models/productSchema");
+const { uploadToCloudinary } = require("../../config/cloudinary");
 
 const getBrandPage = async (req,res) => {
     try {
@@ -41,11 +42,16 @@ const addBrand = async (req, res) => {
       return res.redirect("/admin/brands?error=Brand already exists");
     }
 
-    const image = req.file.filename;
+    if (!req.file || !req.file.buffer) {
+      return res.redirect("/admin/brands?error=Brand logo is required");
+    }
+
+    const cloudinaryResult = await uploadToCloudinary(req.file.buffer, "brands");
+    const imageUrl = cloudinaryResult.secure_url;
 
     const newBrand = new Brand({
       brandName: brand,
-      brandImage: image,
+      brandImage: [imageUrl],
     });
 
     await newBrand.save();
@@ -56,6 +62,7 @@ const addBrand = async (req, res) => {
     res.redirect("/pageerror");
   }
 };
+
 
 
 const blockBrand = async (req,res) => {

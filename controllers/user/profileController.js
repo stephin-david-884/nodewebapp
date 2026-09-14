@@ -9,6 +9,7 @@ const { text } = require("express");
 const generateReferralCode = require('../../utils/generateReferralCode')
 const saveSession = require("../../utils/saveSession")
 const getSessionUserId = require("../../utils/getSessionUserId")
+const { uploadToCloudinary } = require("../../config/cloudinary")
 
 
 function generateOtp() {
@@ -508,20 +509,26 @@ const deleteAddress = async (req,res) => {
 
 const changeProfilePic = async (req,res) => {
     try {
-    const userId = req.session.user;
-    const filename = req.file.filename;
+        const userId = req.session.user;
+        if (!req.file || !req.file.buffer) {
+            return res.status(400).json({ error: "No image file provided" });
+        }
 
-    // Update user schema
-    await User.findByIdAndUpdate(userId, {
-      profileImage: filename
-    });
+        const cloudinaryResult = await uploadToCloudinary(req.file.buffer, "profiles");
+        const imageUrl = cloudinaryResult.secure_url;
 
-    res.json({ success: true, filename });
+        // Update user schema
+        await User.findByIdAndUpdate(userId, {
+            profileImage: imageUrl
+        });
+
+        res.json({ success: true, filename: imageUrl, imageUrl });
     } catch (error) {
-        console.error(err);
-    res.status(500).json({ error: "Upload failed" });
+        console.error("Profile pic upload error:", error);
+        res.status(500).json({ error: "Upload failed" });
     }
 }
+
 
 module.exports = {
     getForgotPassPage,

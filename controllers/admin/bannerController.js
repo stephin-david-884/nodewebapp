@@ -1,6 +1,7 @@
 const Banner = require("../../models/bannerSchema");
 const path = require("path")
 const fs = require("fs")
+const { uploadToCloudinary } = require("../../config/cloudinary");
 
 const getBannerPage = async (req,res) => {
     try {
@@ -23,25 +24,32 @@ const getAddBannerPage = async (req,res) => {
 
 const addBanner = async (req,res) => {
     try {
-        
-        const  data = req.body;
-        const image = req.file;
-        const newBanner = new Banner({
-            image:image.filename,
-            title:data.title,
-            description:data.description,
-            startDate: new Date(data.startDate+"T00:00:00"),
-            endDate: new Date(data.endDate+"T00:00:00"),
-            link:data.link,
-        })
+        const data = req.body;
+        if (!req.file || !req.file.buffer) {
+            return res.redirect("/admin/banner");
+        }
 
-        await newBanner.save().then((data)=>console.log(data));
+        const cloudinaryResult = await uploadToCloudinary(req.file.buffer, "banners");
+        const imageUrl = cloudinaryResult.secure_url;
+
+        const newBanner = new Banner({
+            image: imageUrl,
+            title: data.title,
+            description: data.description,
+            startDate: new Date(data.startDate + "T00:00:00"),
+            endDate: new Date(data.endDate + "T00:00:00"),
+            link: data.link,
+        });
+
+        await newBanner.save();
         res.redirect("/admin/banner");
 
     } catch (error) {
-        res.redirect("/admin/pagerror")
+        console.error("Error adding banner:", error);
+        res.redirect("/admin/pageerror")
     }
 }
+
 
 const deleteBanner = async (req,res) => {
     try {

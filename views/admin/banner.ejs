@@ -29,7 +29,8 @@
                 <%for(let i=0; i<data.length;i++){%>
                       <tr>
                           <td>
-                              <img src="/uploads/re-image/<%=data[i].image%>" style="height: 2rem; width: 3rem;" class="img-xs" alt="Item">
+                              <img src="<%= (data[i].image && data[i].image.startsWith('http')) ? data[i].image : '/uploads/re-image/' + data[i].image %>" style="height: 2rem; width: 3rem;" class="img-xs" alt="Item">
+
 
 
 
