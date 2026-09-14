@@ -2,12 +2,15 @@ const express = require("express")
 const app = express();
 const path = require("path")
 const MongoStore = require("connect-mongo");
-const env = require("dotenv").config();
+const dotenv = require("dotenv");
 const db = require("./config/db");
 const session = require("express-session");
 const passport = require("./config/passport");
+
 const userRouter = require("./routes/userRouter")
 const adminRouter = require("./routes/adminRouter")
+
+dotenv.config();
 db()
 
 app.use(express.json());
@@ -15,7 +18,7 @@ app.use(express.urlencoded({extended:true}));
 app.use(session({
     secret:process.env.SESSION_SECRET,
     resave:false,
-    saveUninitialized:true,
+    saveUninitialized:false,
     store: MongoStore.create({
         mongoUrl: process.env.MONGODB_URI,
         collectionName: "sessions"
