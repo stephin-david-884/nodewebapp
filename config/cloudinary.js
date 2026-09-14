@@ -26,7 +26,7 @@ const uploadToCloudinary = (buffer, folder = "uploads") => {
 };
 
 /**
- * Upload Base64 data string (e.g. data:image/png;base64,...) to Cloudinary
+ * Upload Base64 data stringto Cloudinary
  * @param {string} base64Data 
  * @param {string} folder 
  * @returns {Promise<object>}

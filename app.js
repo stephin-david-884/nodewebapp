@@ -97,7 +97,7 @@ app.use((req,res,next)=>{
 app.use("/",userRouter)
 app.use("/admin",adminRouter);
 
-// 404 Page Not Found Handler (for all unmatched routes)
+// 404 Page Not Found Handler
 app.use((req, res, next) => {
   res.status(404).render('pageNotFound'); 
 });
