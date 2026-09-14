@@ -1,6 +1,7 @@
 const express = require("express")
 const app = express();
 const path = require("path")
+const MongoStore = require("connect-mongo");
 const env = require("dotenv").config();
 const db = require("./config/db");
 const session = require("express-session");
@@ -15,6 +16,10 @@ app.use(session({
     secret:process.env.SESSION_SECRET,
     resave:false,
     saveUninitialized:true,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGODB_URI,
+        collectionName: "sessions"
+    }),
     cookie:{
         secure:process.env.NODE_ENV === "production",
         httpOnly:true,
@@ -22,14 +27,16 @@ app.use(session({
     }
 }))
 
-app.use((req, res, next) => {
-    res.locals.user = req.session.user || req.user || null;
-    next();
-  });
+
   
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+app.use((req, res, next) => {
+    res.locals.user = req.session.user || req.user || null;
+    next();
+  });
 
 app.use((req,res,next)=>{
     res.set('cache-control','no-store')
