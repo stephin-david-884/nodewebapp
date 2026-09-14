@@ -154,10 +154,10 @@ const getCheckoutPage = async (req, res) => {
 });
 
 
-    console.log("User ID:", user);
-console.log("Total Price:", totalPrice);
-console.log("Available coupons:", availableCoupons.length);
-availableCoupons.forEach(c => console.log(c.name));
+// console.log("User ID:", user);
+// console.log("Total Price:", totalPrice);
+// console.log("Available coupons:", availableCoupons.length);
+// availableCoupons.forEach(c => console.log(c.name));
 
 
 
@@ -210,7 +210,7 @@ const orderPlaced = async (req, res) => {
     );
     if (!desiredAddress) return res.status(404).json({ error: "Specific address not found" });
 
-    // ✅ Load each product individually based on cart items to preserve size context
+    // Load each product individually based on cart items to preserve size context
     const orderedProducts = await Promise.all(
       findUser.cart.map(async (cartItem) => {
         const product = await Product.findById(cartItem.productId);
@@ -241,7 +241,7 @@ const orderPlaced = async (req, res) => {
 
     const finalAmount = totalPrice - discount;
 
-    // ✅ Wallet balance check
+    // Wallet balance check
     if (payment === "wallet" && finalAmount > findUser.wallet) {
       return res.json({ payment: false, method: "wallet", success: false });
     }
