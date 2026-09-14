@@ -13,6 +13,7 @@ require('pdfkit-table');
 const env = require("dotenv").config();
 const razorpay = require("razorpay");
 const crypto = require("crypto");
+const getSessionUserId = require("../../utils/getSessionUserId");
 const moment = require("moment");
 const razorpayInstance = new razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
@@ -78,7 +79,7 @@ const calculateCartTotal = async (userId) => {
 
 const getCheckoutPage = async (req, res) => {
   try {
-    const user = req.session.user._id;
+    const user = getSessionUserId(req);
 
     const findUser = await User.findOne({ _id: user });
     const addressData = await Address.findOne({ userId: user });
@@ -663,7 +664,7 @@ const paymentConfirm = async (req, res) => {
 
 const applyCoupon = async (req, res) => {
   const { code } = req.body;
-  const userId = req.session.user._id;
+  const userId = getSessionUserId(req);
 
   try {
     // 👉 Find coupon that is either public OR private but assigned to this user

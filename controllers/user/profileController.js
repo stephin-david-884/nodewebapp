@@ -7,6 +7,8 @@ const env = require("dotenv").config();
 const session = require("express-session");
 const { text } = require("express");
 const generateReferralCode = require('../../utils/generateReferralCode')
+const saveSession = require("../../utils/saveSession")
+const getSessionUserId = require("../../utils/getSessionUserId")
 
 
 function generateOtp() {
@@ -82,8 +84,8 @@ const forgotEmailValid = async (req,res) => {
             if(emailSent){
                 req.session.userOtp = otp;
                 req.session.email = email;
+                await saveSession(req);
                 res.render("forgotPass-otp")
-                console.log("OTP:",otp);
                 
             }else{
                 res.json({success:false, message:"Failed to send OTP. Please try again"});
@@ -127,10 +129,9 @@ const resendOtp = async (req,res) => {
         const otp = generateOtp();
         req.session.userOtp = otp;
         const email = req.session.email;
-        console.log("Resending OTP to email:",email);
+        await saveSession(req);
         const emailSent = await sendVerificationEmail(email,otp);
         if(emailSent){
-            console.log("Resend OTP:",otp);
             res.status(200).json({success:true, message:"Resend OTP Successful"})
             
         }
@@ -243,9 +244,8 @@ const changeEmailValid = async (req,res) => {
                 req.session.userOtp = otp;
                 req.session.userData = req.body;
                 req.session.email = email;
+                await saveSession(req);
                 res.render("change-email-otp");
-                console.log("Email sent:",email);
-                console.log("OTP",otp);
                 
                 
             }else{
@@ -268,6 +268,7 @@ const verifyEmailOtp = async (req,res) => {
         const enteredOtp = req.body.otp;
         if(enteredOtp === req.session.userOtp){
             req.session.userData = req.body.userData;
+            await saveSession(req);
             res.render("new-email",{
                 userData: req.session.userData,
             })
@@ -308,7 +309,7 @@ const changePassword = async (req,res) => {
 
 const changePasswordValid = async (req,res) => {
      try {
-    const userId = req.session.user._id;
+    const userId = getSessionUserId(req);
     const { currentPassword, newPassword, confirmPassword } = req.body;
 
     // Find the user
@@ -353,7 +354,7 @@ const verifyChangePassword = async (req,res) => {
 
 const addAddress = async (req,res) => {
     try {
-        const user = req.session.user;
+        const user = await User.findById(getSessionUserId(req));
         res.render("add-address",{user:user})
     } catch (error) {
         res.redirect("/pagenotfound")
@@ -362,7 +363,7 @@ const addAddress = async (req,res) => {
 
 const addaddress = async (req,res) => {
     try {
-        const user = req.session.user;
+        const user = await User.findById(getSessionUserId(req));
         res.render("add-Addres",{user:user})
     } catch (error) {
         res.redirect("/pagenotfound")
@@ -422,7 +423,7 @@ const postAddAddres = async (req,res) => {
 const editAddress =async (req,res) => {
     try {
         const addressId = req.query.id;
-        const user = req.session.user;
+        const user = await User.findById(getSessionUserId(req));
         const currAddress = await Address.findOne({
             "address._id": addressId,
         });

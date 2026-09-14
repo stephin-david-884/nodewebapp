@@ -1,12 +1,13 @@
 const User = require("../../models/userSchema");
 const Product = require("../../models/productSchema");
 const mongodb = require("mongodb");
+const getSessionUserId = require("../../utils/getSessionUserId");
 
 
 const getCartPage = async (req, res) => {
   try {
     
-    const id = req.session.user?._id;
+    const id = getSessionUserId(req);
     const user = await User.findOne({ _id: id });
     const productIds = user.cart.map((item) => item.productId);
     const products = await Product.find({ _id: { $in: productIds } });
@@ -59,7 +60,7 @@ const getCartPage = async (req, res) => {
 const addToCart = async (req, res) => {
   try {
     const id = req.body.productId;
-    const userId = req.session.user?._id;
+    const userId = getSessionUserId(req);
     const selectedQuantity = parseInt(req.body.quantity) || 1;
      const selectedSize = req.body.size;
 
@@ -125,7 +126,7 @@ const addToCart = async (req, res) => {
 const changeQuantity = async (req, res) => {
   try {
     const id = req.body.productId;
-    const user = req.session.user?._id;
+    const user = getSessionUserId(req);
     const count = parseInt(req.body.count);
 
     const findUser = await User.findOne({ _id: user });
@@ -203,7 +204,7 @@ const changeQuantity = async (req, res) => {
 const deleteProduct = async (req, res) => {
   try {
     const { productId, size } = req.body;
-    const userId = req.session.user._id;
+    const userId = getSessionUserId(req);
 
     const user = await User.findById(userId);
 
@@ -239,7 +240,7 @@ const deleteProduct = async (req, res) => {
 
 const updateCartSize = async (req, res) => {
   try {
-    const userId = req.session.user._id;
+    const userId = getSessionUserId(req);
     const { productId, currentSize, newSize } = req.body;
 
     const user = await User.findById(userId);

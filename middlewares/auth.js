@@ -1,7 +1,8 @@
 const User = require("../models/userSchema");
+const getSessionUserId = require("../utils/getSessionUserId");
 
 const userAuth = (req, res, next) => {
-    const userId = req.session?.user || req.user?._id;
+    const userId = getSessionUserId(req) || req.user?._id;
 
     if (userId) {
         User.findById(userId)

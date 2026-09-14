@@ -2,6 +2,7 @@ const express = require("express")
 const router = express.Router();
 const userController = require("../controllers/user/userController")
 const passport = require("passport")
+const saveSession = require("../utils/saveSession")
 const profileController = require("../controllers/user/profileController")
 const {userAuth} = require("../middlewares/auth")
 const productController = require("../controllers/user/productController")
@@ -53,10 +54,14 @@ router.get("/auth/google",passport.authenticate('google',{scope:['profile','emai
 router.get(
     "/auth/google/callback",
     passport.authenticate("google", { failureRedirect: "/signup" }),
-    (req, res) => {
-      // Set req.session.user so your system recognizes the user
-      req.session.user = req.user;
-      res.redirect("/");
+    async (req, res, next) => {
+      req.session.user = req.user._id;
+      try {
+        await saveSession(req);
+        res.redirect("/");
+      } catch (error) {
+        next(error);
+      }
     }
   );
   

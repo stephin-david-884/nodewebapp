@@ -10,6 +10,7 @@ const env = require("dotenv").config();
 const Coupon = require("../../models/couponSchema")
 const Order = require("../../models/orderSchema")
 const mongoose = require("mongoose");
+const saveSession = require("../../utils/saveSession");
 
 const pageNotFound = async (req,res) => {
     try {
@@ -230,7 +231,6 @@ const signup = async (req, res) => {
       return res.json("email-error");
     }
 
-    // Save user data + referral code in session
     req.session.userOtp = otp;
     req.session.userData = {
       name,
@@ -240,8 +240,8 @@ const signup = async (req, res) => {
       referralCode: referralCode || null,
     };
 
+    await saveSession(req);
     res.render("verify-otp");
-    console.log("OTP Sent", otp);
 
   } catch (error) {
     console.error("signup error", error);
@@ -265,6 +265,13 @@ const securePassword = async (password) => {
 const verifyOtp = async (req, res) => {
   try {
     const { otp } = req.body;
+
+    if (!req.session.userOtp || !req.session.userData) {
+      return res.status(400).json({
+        success: false,
+        message: "Session expired. Please sign up again."
+      });
+    }
 
     if (otp === req.session.userOtp) {
       const user = req.session.userData;
@@ -307,6 +314,9 @@ const verifyOtp = async (req, res) => {
       }
 
       req.session.user = saveUserData._id;
+      delete req.session.userOtp;
+      delete req.session.userData;
+      await saveSession(req);
       res.json({ success: true, redirectUrl: "/" });
     } else {
       res.status(400).json({ success: false, message: "Invalid OTP, Please try again" });
@@ -328,10 +338,10 @@ const resendOtp = async (req,res) => {
         }
         const otp = generateOtp();
         req.session.userOtp = otp;
+        await saveSession(req);
 
         const emailSent = await sendVerificationEmail(email,otp);
         if(emailSent){
-            console.log("Resend OTP:",otp);
             res.status(200).json({success:true, message:"OTP Resent successfully"})
         }else{
             res.status(500).json({success:false, message:"Failed to resend OTP. Please try again"})
@@ -374,7 +384,8 @@ const login = async (req,res) => {
             return res.render("login",{message:"Incorrect Password"})
         }
 
-        req.session.user = findUser;
+        req.session.user = findUser._id;
+        await saveSession(req);
         res.redirect("/")
 
     } catch (error) {

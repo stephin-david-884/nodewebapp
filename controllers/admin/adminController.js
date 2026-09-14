@@ -5,6 +5,7 @@ const Order = require("../../models/orderSchema")
 const Product = require("../../models/productSchema")
 const PDFDocument = require('pdfkit');
 const ExcelJS = require('exceljs');
+const saveSession = require("../../utils/saveSession");
 
 const pageerror = async (req,res) => {
     res.render("admin-error")    
@@ -39,6 +40,7 @@ const login = async (req, res) => {
       if (passwordMatch) {
         req.session.admin = true;
         req.session.adminId = admin._id;
+        await saveSession(req);
         return res.redirect("/admin");
       } else {
         return res.redirect("/admin/login?error=invalid");
